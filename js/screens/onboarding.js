@@ -2,12 +2,24 @@ TF.Screens.onboarding = function(root) {
   var step = 0;
   var data = { name: '', goal: 'muscle', equipment: 'minimal', experience: 'beginner' };
 
+  function stepBadge(icon, bg, border, color) {
+    return '<div style="width:64px;height:64px;border-radius:18px;background:' + bg + ';border:1px solid ' + border + ';color:' + color + ';display:flex;align-items:center;justify-content:center;margin-bottom:16px">' +
+      TF.Icon(icon, 30) +
+    '</div>';
+  }
+
+  function choiceBadge(icon, bg, border, color, size) {
+    return '<div style="width:42px;height:42px;border-radius:12px;background:' + bg + ';border:1px solid ' + border + ';color:' + color + ';display:flex;align-items:center;justify-content:center;flex-shrink:0">' +
+      TF.Icon(icon, size || 22) +
+    '</div>';
+  }
+
   var STEPS = [
     function(){
       return '<div class="onboard-step">' +
         '<div class="onboard-step-num">STEP 1 OF 3</div>' +
         '<div class="onboard-dots"><div class="onboard-dot active"></div><div class="onboard-dot"></div><div class="onboard-dot"></div></div>' +
-        '<div style="font-size:48px;margin-bottom:16px">HI</div>' +
+        stepBadge('user', 'var(--blue-dim)', 'var(--blue)', 'var(--blue)') +
         '<div class="t-headline" style="font-size:28px;margin-bottom:8px">What is your name,<br>warrior?</div>' +
         '<div class="t-body" style="margin-bottom:32px">This is your transformation. Let us make it personal.</div>' +
         '<input class="field" id="ob-name" type="text" placeholder="Enter your name" maxlength="30" value="' + TF.UI.escapeAttr(data.name) + '" autocomplete="name" style="font-size:18px;padding:16px;text-align:center;margin-bottom:24px">' +
@@ -18,7 +30,7 @@ TF.Screens.onboarding = function(root) {
       return '<div class="onboard-step">' +
         '<div class="onboard-step-num">STEP 2 OF 3</div>' +
         '<div class="onboard-dots"><div class="onboard-dot"></div><div class="onboard-dot active"></div><div class="onboard-dot"></div></div>' +
-        '<div style="font-size:48px;margin-bottom:16px">GO</div>' +
+        stepBadge('target', 'var(--lime-dim)', 'var(--lime)', 'var(--lime)') +
         '<div class="t-headline" style="font-size:28px;margin-bottom:8px">What is your<br>primary goal?</div>' +
         '<div class="t-body" style="margin-bottom:28px">This shapes your missions, nutrition targets, and training plan.</div>' +
         ['muscle', 'fatLoss', 'discipline'].map(function(goal){
@@ -28,9 +40,12 @@ TF.Screens.onboarding = function(root) {
             fatLoss: 'Caloric deficit, high protein, conditioning focus.',
             discipline: 'Consistency, habits, and mental performance.'
           };
+          var icons = { muscle: 'dumbbell', fatLoss: 'trending-down', discipline: 'shield' };
+          var colors = { muscle: 'var(--lime)', fatLoss: 'var(--red)', discipline: 'var(--blue)' };
+          var backgrounds = { muscle: 'var(--lime-dim)', fatLoss: 'var(--red-dim)', discipline: 'var(--blue-dim)' };
           return '<div class="card card-hover" data-goal="' + goal + '" style="margin-bottom:10px;cursor:pointer;border-color:' + (data.goal === goal ? 'var(--lime)' : 'var(--border)') + '">' +
             '<div style="display:flex;align-items:center;gap:14px">' +
-              '<div style="font-size:28px;font-weight:900">' + labels[goal].slice(0, 2).toUpperCase() + '</div>' +
+              choiceBadge(icons[goal], backgrounds[goal], colors[goal], colors[goal], 22) +
               '<div><div class="t-title">' + labels[goal] + '</div><div class="t-hint">' + descriptions[goal] + '</div></div>' +
               (data.goal === goal ? '<div style="margin-left:auto;color:var(--lime)">' + TF.Icon('check-circle', 18) + '</div>' : '') +
             '</div>' +
@@ -44,7 +59,7 @@ TF.Screens.onboarding = function(root) {
       return '<div class="onboard-step">' +
         '<div class="onboard-step-num">STEP 3 OF 3</div>' +
         '<div class="onboard-dots"><div class="onboard-dot"></div><div class="onboard-dot"></div><div class="onboard-dot active"></div></div>' +
-        '<div style="font-size:48px;margin-bottom:16px">GY</div>' +
+        stepBadge('dumbbell', 'var(--amber-dim)', 'var(--amber)', 'var(--amber)') +
         '<div class="t-headline" style="font-size:28px;margin-bottom:8px">What equipment<br>do you have?</div>' +
         '<div class="t-body" style="margin-bottom:28px">We will build a workout plan around what you actually have access to.</div>' +
         '<div class="toggle-row" id="tgl-equip" style="flex-direction:column;gap:10px">' +
@@ -54,8 +69,11 @@ TF.Screens.onboarding = function(root) {
               minimal: 'Dumbbells / home gym',
               full: 'Full gym access'
             };
+            var icons = { none: 'activity', minimal: 'dumbbell', full: 'target' };
+            var colors = { none: 'var(--teal)', minimal: 'var(--amber)', full: 'var(--blue)' };
+            var backgrounds = { none: 'var(--teal-dim)', minimal: 'var(--amber-dim)', full: 'var(--blue-dim)' };
             return '<div class="toggle-chip ' + (data.equipment === option ? 'on' : '') + '" data-val="' + option + '" style="text-align:left;padding:14px;display:flex;align-items:center;gap:12px">' +
-              '<span style="font-size:20px;font-weight:800">' + labels[option].slice(0, 2).toUpperCase() + '</span>' +
+              choiceBadge(icons[option], backgrounds[option], colors[option], colors[option], 20) +
               '<span>' + labels[option] + '</span>' +
             '</div>';
           }).join('') +
