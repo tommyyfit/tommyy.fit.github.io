@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="tommyy.fit icon">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#11151c"/>
+      <stop offset="100%" stop-color="#05070b"/>
+    </linearGradient>
+    <linearGradient id="stroke" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#c8ff00"/>
+      <stop offset="100%" stop-color="#7ee000"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect x="24" y="24" width="464" height="464" rx="88" fill="none" stroke="url(#stroke)" stroke-width="16"/>
+  <path d="M132 148h248v52H284v164h-56V200h-96z" fill="#f6f7fb"/>
+  <circle cx="372" cy="364" r="34" fill="#c8ff00"/>
+</svg>

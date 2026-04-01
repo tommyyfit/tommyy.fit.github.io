@@ -1,0 +1,55 @@
+/* ================================================================
+   TOMMYY.FIT v3 — Design Tokens — Dark + Light (Complete)
+   ================================================================ */
+:root, [data-theme="dark"] {
+  --bg-base:#07070A; --bg-1:#0E0E13; --bg-2:#15151C; --bg-3:#1B1B24; --bg-4:#222230; --bg-5:#2C2C3C;
+  --bg-overlay:rgba(0,0,0,0.85); --bg-glass:rgba(21,21,28,0.92);
+  --border:#22222E; --border-2:#2E2E3E; --border-3:#3E3E54;
+  --lime:#C8FF00; --lime-dim:rgba(200,255,0,.10); --lime-mid:rgba(200,255,0,.20); --lime-glow:rgba(200,255,0,.06);
+  --blue:#4DBFF5; --blue-dim:rgba(77,191,245,.11);
+  --amber:#FFB830; --amber-dim:rgba(255,184,48,.11);
+  --red:#FF5050; --red-dim:rgba(255,80,80,.11);
+  --purple:#B29EFF; --purple-dim:rgba(178,158,255,.11);
+  --teal:#38D4BC; --teal-dim:rgba(56,212,188,.11);
+  --green:#46DC78; --green-dim:rgba(70,220,120,.11);
+  --orange:#FF8830; --orange-dim:rgba(255,136,48,.11);
+  --txt:#ECEEF8; --txt-2:#8080A4; --txt-3:#404056; --txt-inv:#07070A;
+  --input-bg:#0E0E13; --input-border:#22222E;
+  --loader-over:rgba(7,7,10,0.75);
+  --loader-text:rgba(255,255,255,0.9); --loader-sub:rgba(255,255,255,0.45); --loader-bar:rgba(255,255,255,0.10);
+  --page-bg:#040407;
+  --shadow-sm:0 2px 12px rgba(0,0,0,.40); --shadow-md:0 4px 24px rgba(0,0,0,.50); --shadow-lg:0 8px 40px rgba(0,0,0,.60);
+}
+[data-theme="light"] {
+  --bg-base:#F8F8FC; --bg-1:#FFFFFF; --bg-2:#F0F0F8; --bg-3:#E6E6F2; --bg-4:#DCDCEC; --bg-5:#CDCDE0;
+  --bg-overlay:rgba(0,0,0,0.55); --bg-glass:rgba(248,248,252,0.92);
+  --border:#DCDCE8; --border-2:#C8C8DC; --border-3:#ABABC8;
+  --lime:#3E8C00; --lime-dim:rgba(62,140,0,.10); --lime-mid:rgba(62,140,0,.22); --lime-glow:rgba(62,140,0,.05);
+  --blue:#0874BB; --blue-dim:rgba(8,116,187,.10);
+  --amber:#B87000; --amber-dim:rgba(184,112,0,.10);
+  --red:#CC2020; --red-dim:rgba(204,32,32,.10);
+  --purple:#5830CC; --purple-dim:rgba(88,48,204,.10);
+  --teal:#077864; --teal-dim:rgba(7,120,100,.10);
+  --green:#167038; --green-dim:rgba(22,112,56,.10);
+  --orange:#BA4800; --orange-dim:rgba(186,72,0,.10);
+  --txt:#0F0F1A; --txt-2:#4A4A6A; --txt-3:#9090AA; --txt-inv:#F8F8FC;
+  --input-bg:#FFFFFF; --input-border:#D0D0E0;
+  --loader-over:rgba(15,15,26,0.72);
+  --loader-text:rgba(255,255,255,0.95); --loader-sub:rgba(255,255,255,0.55); --loader-bar:rgba(255,255,255,0.20);
+  --page-bg:#E4E4F0;
+  --shadow-sm:0 2px 12px rgba(0,0,0,.07); --shadow-md:0 4px 24px rgba(0,0,0,.10); --shadow-lg:0 8px 40px rgba(0,0,0,.14);
+}
+:root {
+  --font-d:'Barlow Condensed',sans-serif; --font-b:'DM Sans',sans-serif; --font-m:'JetBrains Mono',monospace;
+  --gap:12px; --gap-lg:20px; --r:14px; --r-sm:8px; --r-lg:20px; --r-xl:28px;
+  --nav-h:66px; --top-h:54px; --max-w:480px;
+  --transition:.18s ease; --transition-slow:.35s ease;
+}
+.chip-lime   {background:var(--lime-dim);  color:var(--lime);}
+.chip-blue   {background:var(--blue-dim);  color:var(--blue);}
+.chip-amber  {background:var(--amber-dim); color:var(--amber);}
+.chip-red    {background:var(--red-dim);   color:var(--red);}
+.chip-purple {background:var(--purple-dim);color:var(--purple);}
+.chip-teal   {background:var(--teal-dim);  color:var(--teal);}
+.chip-green  {background:var(--green-dim); color:var(--green);}
+.chip-orange {background:var(--orange-dim);color:var(--orange);}
