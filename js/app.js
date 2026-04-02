@@ -65,23 +65,76 @@
     TF.Router.define('more', TF.Screens.more);
 
     var actions = document.getElementById('topbar-actions');
+    
+    // Populate topbar-actions for mobile only
     if (actions) {
       actions.innerHTML =
-        '<button class="topbar-btn" id="btn-theme" title="Toggle theme">' +
+        '<button class="topbar-btn" id="btn-theme-mobile" title="Toggle theme">' +
           (TF.Store.getTheme() === 'light' ? TF.Icon('moon', 15) : TF.Icon('sun', 15)) +
         '</button>' +
-        '<button class="topbar-btn" id="btn-profile" title="Profile">' + TF.Icon('user', 15) + '</button>';
+        '<button class="topbar-btn" id="btn-profile-mobile" title="Profile">' + TF.Icon('user', 15) + '</button>';
 
-      document.getElementById('btn-profile').addEventListener('click', function(){
+      document.getElementById('btn-profile-mobile').addEventListener('click', function(){
+        if (TF.Store.requiresAccount()) {
+          TF.UI.promptAccountRequired();
+          return;
+        }
         TF.Router.navigate('profile');
       });
 
-      document.getElementById('btn-theme').addEventListener('click', function(){
+      document.getElementById('btn-theme-mobile').addEventListener('click', function(){
+        if (TF.Store.requiresAccount()) {
+          TF.UI.promptAccountRequired();
+          return;
+        }
         var current = TF.Store.getTheme();
         var next = current === 'dark' ? 'light' : 'dark';
         TF.Store.setTheme(next);
         TF.UI.toast((next === 'light' ? 'Light mode' : 'Dark mode') + ' on');
-        var themeBtn = document.getElementById('btn-theme');
+        var themeBtn = document.getElementById('btn-theme-mobile');
+        if (themeBtn) {
+          themeBtn.innerHTML = next === 'light' ? TF.Icon('moon', 15) : TF.Icon('sun', 15);
+        }
+      });
+    }
+    
+    // Add theme and profile buttons to sidebar (desktop)
+    var bottomNav = document.getElementById('bottom-nav');
+    if (bottomNav) {
+      var sidebarActions = document.createElement('div');
+      sidebarActions.className = 'sidebar-topbar-actions';
+      sidebarActions.innerHTML =
+        '<button class="topbar-btn" id="btn-theme-desktop" title="Toggle theme">' +
+          (TF.Store.getTheme() === 'light' ? TF.Icon('moon', 15) : TF.Icon('sun', 15)) +
+        '</button>' +
+        '<button class="topbar-btn" id="btn-profile-desktop" title="Profile">' + TF.Icon('user', 15) + '</button>';
+      
+      // Insert before sidebar footer
+      var footer = bottomNav.querySelector('.sidebar-footer');
+      if (footer) {
+        bottomNav.insertBefore(sidebarActions, footer);
+      } else {
+        bottomNav.appendChild(sidebarActions);
+      }
+
+      document.getElementById('btn-profile-desktop').addEventListener('click', function(){
+        if (TF.Store.requiresAccount()) {
+          TF.UI.promptAccountRequired();
+          return;
+        }
+        TF.Router.navigate('profile');
+      });
+
+      document.getElementById('btn-theme-desktop').addEventListener('click', function(){
+        if (TF.Store.requiresAccount()) {
+          TF.UI.promptAccountRequired();
+          return;
+        }
+        var current = TF.Store.getTheme();
+        var next = current === 'dark' ? 'light' : 'dark';
+        TF.Store.setTheme(next);
+        TF.UI.toast((next === 'light' ? 'Light mode' : 'Dark mode') + ' on');
+        var themeBtn = document.getElementById('btn-theme-desktop');
         if (themeBtn) {
           themeBtn.innerHTML = next === 'light' ? TF.Icon('moon', 15) : TF.Icon('sun', 15);
         }
@@ -92,17 +145,14 @@
     document.getElementById('screen-root').classList.remove('hidden');
     document.getElementById('bottom-nav').classList.remove('hidden');
 
-    TF.Router.init();
+    var initialRoute = TF.Store.requiresAccount() ? 'onboarding' : (window.location.hash.slice(1) || 'dashboard');
+    TF.Router.init(initialRoute);
 
     if (isFileProtocol()) {
       TF.UI.toast('Opened from a local file. GitHub Pages or localhost is recommended.', null, 4200);
     }
 
-    var profile = TF.Store.getProfile();
-    var onboarded = localStorage.getItem('tf_onboarded');
-    if (!onboarded && profile.name === 'Warrior') {
-      TF.Router.navigate('onboarding', true);
-    } else {
+    if (TF.Store.isAccountReady()) {
       maybeShowBackupReminder(false);
     }
 
@@ -112,7 +162,7 @@
       var target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 0, 0);
       var ms = now < target ? target - now : 24 * 60 * 60 * 1000 - (now - target);
       setTimeout(function(){
-        if (!TF.Store.getTodayInput()) {
+        if (TF.Store.isAccountReady() && !TF.Store.getTodayInput()) {
           TF.UI.toast('You have not checked in today. Open Check-in to unlock your score.', null, 5000);
         }
       }, Math.min(ms, 3 * 60 * 60 * 1000));
@@ -124,7 +174,7 @@
     }
 
     document.addEventListener('visibilitychange', function(){
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === 'visible' && TF.Store.isAccountReady()) {
         maybeShowBackupReminder(false);
       }
     });

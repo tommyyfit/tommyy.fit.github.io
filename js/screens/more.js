@@ -2,12 +2,47 @@ TF.Screens.more = function(root) {
   var profile = TF.Store.getProfile();
   var level = TF.Store.getLevel(profile);
   var title = TF.Store.getWarriorTitle(level);
+  var maxNamedLevel = TF.Config.WarriorTitles.length - 1;
   var safeName = TF.UI.escapeHTML(profile.name);
   var safeBrandUrl = TF.UI.escapeAttr(TF.Config.brandUrl);
   var unlockedCount = Object.keys(TF.Store.getUnlockedAchievements()).length;
   var totalAchievements = TF.Achievements.getAll().length;
   var habitsDone = TF.Habits.getDoneCount();
   var totalHabits = TF.Config.DefaultHabits.length;
+
+  function buildLevelGuide() {
+    var perLevel = TF.Config.XP.perLevel;
+    var titles = TF.Config.WarriorTitles.slice(1);
+    var summaryCopy = level >= maxNamedLevel
+      ? 'You are at the top visible rank track with ' + profile.xp + ' XP total.'
+      : profile.xp + ' XP total. ' + TF.Store.getXPToNext(profile) + ' XP to reach the next level.';
+
+    return '<div class="level-guide">' +
+      '<div class="level-guide-summary">' +
+        '<div class="level-guide-summary-label">Current Rank</div>' +
+        '<div class="level-guide-summary-title">Lv.' + level + ' ' + TF.UI.escapeHTML(title) + '</div>' +
+        '<div class="level-guide-summary-copy">' + TF.UI.escapeHTML(summaryCopy) + '</div>' +
+      '</div>' +
+      '<div class="level-guide-list">' +
+        titles.map(function(rank, idx) {
+          var lvl = idx + 1;
+          var isLast = lvl === titles.length;
+          var isActive = isLast ? level >= lvl : level === lvl;
+          var range = isLast
+            ? ((lvl - 1) * perLevel) + '+ XP'
+            : ((lvl - 1) * perLevel) + ' - ' + ((lvl * perLevel) - 1) + ' XP';
+
+          return '<div class="level-guide-row' + (isActive ? ' active' : '') + '">' +
+            '<div>' +
+              '<div class="level-guide-name">Lv.' + lvl + (isLast ? '+' : '') + ' ' + TF.UI.escapeHTML(rank) + '</div>' +
+              '<div class="level-guide-range">' + range + '</div>' +
+            '</div>' +
+            '<div class="level-guide-badge">' + (isActive ? 'Current' : '') + '</div>' +
+          '</div>';
+        }).join('') +
+      '</div>' +
+    '</div>';
+  }
 
   var tiles = [
     { route: 'habits', icon: 'target', title: 'Daily Habits', desc: habitsDone + '/' + totalHabits + ' done today. Build streaks and XP.', bg: 'var(--lime-dim)', col: 'var(--lime)', badge: habitsDone > 0 ? habitsDone : null },
@@ -37,12 +72,13 @@ TF.Screens.more = function(root) {
       '</div>';
     }).join('') +
 
-    '<div class="card" style="margin-top:8px;display:flex;align-items:center;gap:14px">' +
+    '<div class="card more-level-card" id="more-level-card" style="margin-top:8px;display:flex;align-items:center;gap:14px">' +
       '<div style="width:44px;height:44px;border-radius:11px;background:var(--lime-dim);border:1px solid var(--lime-mid);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;flex-shrink:0">LV</div>' +
       '<div style="flex:1;min-width:0">' +
         '<div style="font-weight:600;font-size:15px">' + safeName + '</div>' +
         '<div class="t-hint">Lv.' + level + ' ' + title + ' - ' + (profile.streakDays || 0) + 'd streak - ' + profile.xp + ' XP</div>' +
       '</div>' +
+      '<div class="more-tile-arrow">' + TF.Icon('chevron-right', 16) + '</div>' +
     '</div>' +
 
     TF.UI.bar(TF.Store.getXPProgress(profile), 'var(--lime)') +
@@ -60,4 +96,20 @@ TF.Screens.more = function(root) {
       TF.Router.navigate(tile.dataset.goto);
     });
   });
+
+  var levelCard = root.querySelector('#more-level-card');
+  if (levelCard) {
+    levelCard.addEventListener('click', function() {
+      TF.UI.modal({
+        icon: 'trophy',
+        title: 'Level Guide',
+        html: buildLevelGuide(),
+        cancelText: 'Close',
+        confirmText: 'Open Profile',
+        onConfirm: function() {
+          TF.Router.navigate('profile');
+        }
+      });
+    });
+  }
 };

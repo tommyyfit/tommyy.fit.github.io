@@ -6,7 +6,22 @@ TF.Router = (function(){
 
   function define(name, fn){ _routes[name] = fn; }
 
+  function shouldBlockRoute(route){
+    return route !== 'onboarding' && TF.Store && TF.Store.requiresAccount && TF.Store.requiresAccount();
+  }
+
+  function resolveRoute(route){
+    return shouldBlockRoute(route) ? 'onboarding' : route;
+  }
+
   function navigate(route, replace){
+    if (shouldBlockRoute(route)) {
+      if (TF.UI && TF.UI.promptAccountRequired) {
+        TF.UI.promptAccountRequired();
+      }
+      route = 'onboarding';
+      replace = true;
+    }
     if (FILE_MODE) { _render(route); return; }
     if (replace) { history.replaceState(null, '', '#' + route); _render(route); }
     else window.location.hash = route;
@@ -15,6 +30,7 @@ TF.Router = (function(){
   function back(){ navigate(_history.length > 1 ? _history[_history.length - 2] : 'dashboard', true); }
 
   function _render(route){
+    route = resolveRoute(route);
     var fn = _routes[route];
     if (!fn) { route = 'dashboard'; fn = _routes.dashboard; }
     if (route === _current) return;
@@ -51,7 +67,7 @@ TF.Router = (function(){
     requestAnimationFrame(function(){ root.scrollTop = 0; });
   }
 
-  function init(){
+  function init(initialRoute){
     document.querySelectorAll('.nav-btn[data-route]').forEach(function(btn){
       btn.addEventListener('click', function(){ navigate(btn.dataset.route); });
     });
@@ -60,7 +76,11 @@ TF.Router = (function(){
         _render(window.location.hash.slice(1) || 'dashboard');
       });
     }
-    _render(window.location.hash.slice(1) || 'dashboard');
+    var route = resolveRoute(initialRoute || window.location.hash.slice(1) || 'dashboard');
+    if (!FILE_MODE && window.location.hash.slice(1) !== route) {
+      history.replaceState(null, '', '#' + route);
+    }
+    _render(route);
   }
 
   function current(){ return _current; }

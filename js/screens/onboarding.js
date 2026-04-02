@@ -2,6 +2,24 @@ TF.Screens.onboarding = function(root) {
   var step = 0;
   var data = { name: '', goal: 'muscle', equipment: 'minimal', experience: 'beginner' };
 
+  function stepNav() {
+    if (step === 0) {
+      return '';
+    }
+
+    return '<div class="onboard-nav">' +
+      '<button class="onboard-nav-btn" id="ob-back" type="button" aria-label="Go back">' +
+        TF.Icon('chevron-left', 18) +
+      '</button>' +
+      (step === 2
+        ? '<button class="onboard-nav-btn" id="ob-back-start" type="button" aria-label="Go back to step 1">' +
+            TF.Icon('chevron-left', 18) +
+            TF.Icon('chevron-left', 18) +
+          '</button>'
+        : '<span class="onboard-nav-spacer" aria-hidden="true"></span>') +
+    '</div>';
+  }
+
   function stepBadge(icon, bg, border, color) {
     return '<div style="width:64px;height:64px;border-radius:18px;background:' + bg + ';border:1px solid ' + border + ';color:' + color + ';display:flex;align-items:center;justify-content:center;margin-bottom:16px">' +
       TF.Icon(icon, 30) +
@@ -17,6 +35,7 @@ TF.Screens.onboarding = function(root) {
   var STEPS = [
     function(){
       return '<div class="onboard-step">' +
+        stepNav() +
         '<div class="onboard-step-num">STEP 1 OF 3</div>' +
         '<div class="onboard-dots"><div class="onboard-dot active"></div><div class="onboard-dot"></div><div class="onboard-dot"></div></div>' +
         stepBadge('user', 'var(--blue-dim)', 'var(--blue)', 'var(--blue)') +
@@ -28,6 +47,7 @@ TF.Screens.onboarding = function(root) {
     },
     function(){
       return '<div class="onboard-step">' +
+        stepNav() +
         '<div class="onboard-step-num">STEP 2 OF 3</div>' +
         '<div class="onboard-dots"><div class="onboard-dot"></div><div class="onboard-dot active"></div><div class="onboard-dot"></div></div>' +
         stepBadge('target', 'var(--lime-dim)', 'var(--lime)', 'var(--lime)') +
@@ -43,11 +63,11 @@ TF.Screens.onboarding = function(root) {
           var icons = { muscle: 'dumbbell', fatLoss: 'trending-down', discipline: 'shield' };
           var colors = { muscle: 'var(--lime)', fatLoss: 'var(--red)', discipline: 'var(--blue)' };
           var backgrounds = { muscle: 'var(--lime-dim)', fatLoss: 'var(--red-dim)', discipline: 'var(--blue-dim)' };
-          return '<div class="card card-hover" data-goal="' + goal + '" style="margin-bottom:10px;cursor:pointer;border-color:' + (data.goal === goal ? 'var(--lime)' : 'var(--border)') + '">' +
+          return '<div class="card card-hover onboard-choice' + (data.goal === goal ? ' selected' : '') + '" data-goal="' + goal + '">' +
             '<div style="display:flex;align-items:center;gap:14px">' +
               choiceBadge(icons[goal], backgrounds[goal], colors[goal], colors[goal], 22) +
               '<div><div class="t-title">' + labels[goal] + '</div><div class="t-hint">' + descriptions[goal] + '</div></div>' +
-              (data.goal === goal ? '<div style="margin-left:auto;color:var(--lime)">' + TF.Icon('check-circle', 18) + '</div>' : '') +
+              '<div class="onboard-choice-check">' + TF.Icon('check-circle', 18) + '</div>' +
             '</div>' +
           '</div>';
         }).join('') +
@@ -57,6 +77,7 @@ TF.Screens.onboarding = function(root) {
     },
     function(){
       return '<div class="onboard-step">' +
+        stepNav() +
         '<div class="onboard-step-num">STEP 3 OF 3</div>' +
         '<div class="onboard-dots"><div class="onboard-dot"></div><div class="onboard-dot"></div><div class="onboard-dot active"></div></div>' +
         stepBadge('dumbbell', 'var(--amber-dim)', 'var(--amber)', 'var(--amber)') +
@@ -95,15 +116,47 @@ TF.Screens.onboarding = function(root) {
     root.innerHTML = '<div class="screen-full" style="background:var(--bg-base);overflow:auto;min-height:100dvh">' +
       '<div style="max-width:440px;margin:0 auto">' + STEPS[step]() + '</div></div>';
 
+    var back = root.querySelector('#ob-back');
+    if (back) {
+      back.addEventListener('click', function() {
+        step = Math.max(0, step - 1);
+        render();
+        TF.UI.haptic(20);
+      });
+    }
+
+    var backStart = root.querySelector('#ob-back-start');
+    if (backStart) {
+      backStart.addEventListener('click', function() {
+        step = 0;
+        render();
+        TF.UI.haptic(20);
+      });
+    }
+
     root.querySelectorAll('[data-goal]').forEach(function(el){
       el.addEventListener('click', function(){
         data.goal = el.dataset.goal;
-        render();
+        root.querySelectorAll('[data-goal]').forEach(function(card){
+          card.classList.toggle('selected', card === el);
+        });
       });
     });
 
     TF.UI.initToggle(root, 'tgl-equip');
     TF.UI.initToggle(root, 'tgl-exp');
+
+    root.querySelectorAll('#tgl-equip .toggle-chip').forEach(function(chip){
+      chip.addEventListener('click', function(){
+        data.equipment = chip.dataset.val;
+      });
+    });
+
+    root.querySelectorAll('#tgl-exp .toggle-chip').forEach(function(chip){
+      chip.addEventListener('click', function(){
+        data.experience = chip.dataset.val;
+      });
+    });
 
     var next = root.querySelector('#ob-next');
     if (next) {
@@ -138,7 +191,7 @@ TF.Screens.onboarding = function(root) {
             createdAt: new Date().toISOString()
           });
 
-          localStorage.setItem('tf_onboarded', '1');
+          TF.Store.markOnboarded();
           TF.UI.haptic(100);
           TF.UI.confetti();
           TF.UI.toast('Welcome, ' + data.name + '. Export a backup soon from Profile.', 'success');

@@ -80,20 +80,26 @@ TF.Screens.workout = function(root) {
     var workoutSubtitle = formatSubtitle(workoutDesc);
     var badgeLabel = getPlanBadgeLabel();
     var workoutDetails = plan.volumeNote ? plan.intensity + ' ' + plan.volumeNote : plan.intensity;
+    var workoutHint = allExDone
+      ? 'All sets are logged. Tap any movement to review or update your session.'
+      : 'Tap any movement to open your sets, track PRs, and keep the session flowing.';
 
     root.innerHTML = '<div class="screen">' +
       '<div class="hero-img-card workout-hero" id="wo-hero">' +
         '<div class="skeleton" style="position:absolute;inset:0;border-radius:var(--r-lg)"></div>' +
         '<div class="hero-img-card-content workout-hero-content">' +
           '<div class="workout-hero-copy">' +
-            '<div class="workout-hero-labels">' +
-              '<span class="workout-hero-label">' + badgeLabel + '</span>' +
-              '<span class="workout-hero-divider">|</span>' +
-              '<span class="workout-hero-label">' + plan.estimatedMinutes + ' MIN</span>' +
+            '<div class="workout-hero-meta">' +
+              '<span class="workout-hero-pill workout-hero-pill-accent">' + badgeLabel + '</span>' +
+              '<span class="workout-hero-pill">' + plan.estimatedMinutes + ' MIN</span>' +
+              '<span class="workout-hero-pill">' + plan.exercises.length + ' EXERCISES</span>' +
             '</div>' +
             '<div class="workout-hero-title">' + plan.title + '</div>' +
             (workoutSubtitle ? '<div class="workout-hero-subtitle">' + workoutSubtitle + '</div>' : '') +
-            '<div class="workout-hero-desc">' + workoutDetails + '</div>' +
+            '<div class="workout-hero-panel">' +
+              '<div class="workout-hero-desc">' + workoutDetails + '</div>' +
+              '<div class="workout-hero-helper">' + workoutHint + '</div>' +
+            '</div>' +
           '</div>' +
         '</div>' +
       '</div>' +

@@ -143,6 +143,19 @@ TF.Store = (function(){
     return profile;
   }
 
+  function isAccountReady(){
+    var profile = getProfile();
+    return localStorage.getItem('tf_onboarded') === '1' || profile.name !== PROFILE_DEF.name;
+  }
+
+  function requiresAccount(){
+    return !isAccountReady();
+  }
+
+  function markOnboarded(){
+    localStorage.setItem('tf_onboarded', '1');
+  }
+
   function addXP(amount){
     var profile = getProfile();
     var today = todayKey();
@@ -696,6 +709,9 @@ TF.Store = (function(){
     rotateOldData: rotateOldData,
     getProfile: getProfile,
     saveProfile: saveProfile,
+    isAccountReady: isAccountReady,
+    requiresAccount: requiresAccount,
+    markOnboarded: markOnboarded,
     addXP: addXP,
     breakStreak: breakStreak,
     getLevel: getLevel,

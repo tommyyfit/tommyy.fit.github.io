@@ -1,4 +1,4 @@
-/* ================================================================ LAYOUT v3 — fully theme-aware ================================================================ */
+/* ================================================================ LAYOUT v4 — mobile + premium aligned desktop ================================================================ */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:16px;-webkit-text-size-adjust:100%;scroll-behavior:smooth}
 body{background:var(--bg-base);color:var(--txt);font-family:var(--font-b);font-size:15px;line-height:1.5;overscroll-behavior:none;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;min-height:100dvh;transition:background .35s,color .35s}
@@ -7,15 +7,16 @@ input,textarea,select{font:inherit;color:inherit;background:none;border:none;out
 a{color:inherit;text-decoration:none}
 img,svg{display:block;max-width:100%}
 
-/* ── App shell ── */
+/* ── App shell (mobile) ── */
 #app{display:flex;flex-direction:column;height:100dvh;max-width:var(--max-w);margin:0 auto;position:relative;overflow:hidden}
-@media(min-width:520px){
+@media(min-width:520px) and (max-width:767px){
   #app{border-left:1px solid var(--border);border-right:1px solid var(--border);box-shadow:var(--shadow-lg)}
   body{background:var(--page-bg)}
 }
 
 /* ── Loader ── */
 #loader{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;max-width:var(--max-w);margin:0 auto;overflow:hidden}
+@media(min-width:768px){#loader{max-width:100%;margin:0}}
 .loader-bg{position:absolute;inset:0;background-size:cover;background-position:center 30%;filter:brightness(.18) saturate(.5)}
 .loader-over{position:absolute;inset:0;background:var(--loader-over)}
 .loader-inner{position:relative;z-index:1;text-align:center;padding:40px 30px}
@@ -27,30 +28,40 @@ img,svg{display:block;max-width:100%}
 .loader-version{font-size:11px;color:rgba(255,255,255,.28)}
 .loader-version a{color:#C8FF00;opacity:.6}
 
-/* ── Topbar ── */
+/* ── Topbar (mobile/loader/header) ── */
 #topbar{height:var(--top-h);background:var(--bg-glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);flex-shrink:0;z-index:20;position:relative;transition:background .35s,border-color .35s}
 .topbar-inner{height:100%;padding:0 18px;display:flex;align-items:center;justify-content:space-between;gap:10px}
 .brand{display:flex;align-items:baseline;flex-shrink:0}
 .brand-text{font-family:var(--font-d);font-size:20px;font-weight:900;letter-spacing:3px;color:var(--txt)}
 .brand-dot{font-family:var(--font-d);font-size:20px;font-weight:900;letter-spacing:1px;color:var(--lime)}
-#topbar-meta{flex:1;display:flex;justify-content:center;font-size:12px;color:var(--txt-3);font-weight:500}
+#topbar-meta{flex:1;display:flex;justify-content:center;align-items:center;font-size:12px;color:var(--txt-3);font-weight:500}
 #topbar-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
 .topbar-btn{width:34px;height:34px;border-radius:9px;background:var(--bg-3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--txt-2);transition:all var(--transition)}
 .topbar-btn:hover{color:var(--txt);border-color:var(--border-2);background:var(--bg-4)}
 .topbar-btn svg{width:15px;height:15px}
 .topbar-btn.active{background:var(--lime-dim);border-color:var(--lime-mid);color:var(--lime)}
 
+/* Hide desktop elements on mobile */
+.topbar-checkin-btn{display:none}
+.sidebar-topbar-actions{display:none;gap:8px;margin:12px 12px 20px 12px;flex-shrink:0;width:calc(100% - 24px)}
+
 /* ── Screen root ── */
 #screen-root{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;scroll-behavior:smooth}
 #screen-root::-webkit-scrollbar{display:none}
+@media(min-width:768px){
+  #screen-root::-webkit-scrollbar{display:block;width:6px}
+  #screen-root::-webkit-scrollbar-track{background:transparent}
+  #screen-root::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:6px}
+  #screen-root::-webkit-scrollbar-thumb:hover{background:var(--border-3)}
+}
 
 /* ── Screen ── */
 .screen{padding:18px 18px calc(var(--nav-h) + 22px);min-height:calc(100dvh - var(--top-h));animation:fadeUp .22s ease both}
 .screen-full{padding:0;min-height:calc(100dvh - var(--top-h));animation:fadeUp .22s ease both}
 
-/* ── Bottom nav ── */
+/* ── Bottom nav (mobile only) ── */
 #bottom-nav{height:var(--nav-h);background:var(--bg-glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;flex-shrink:0;padding-bottom:env(safe-area-inset-bottom,0);position:relative;z-index:20;transition:background .35s,border-color .35s}
-.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px 4px;color:var(--txt-3);transition:color var(--transition);position:relative}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px 4px;color:var(--txt-3);transition:color var(--transition),background var(--transition);position:relative}
 .nav-btn.active{color:var(--lime)}.nav-btn:hover:not(.active){color:var(--txt-2)}
 .nav-btn.active::after{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:24px;height:2px;background:var(--lime);border-radius:0 0 2px 2px}
 .nav-btn svg{width:19px;height:19px}
@@ -63,10 +74,20 @@ img,svg{display:block;max-width:100%}
 /* ── Toast ── */
 #toast-root{position:fixed;bottom:calc(var(--nav-h)+16px);left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;align-items:center;gap:8px;width:calc(min(var(--max-w),100vw) - 32px);pointer-events:none}
 .toast{background:var(--bg-4);border:1px solid var(--border-2);border-radius:var(--r-sm);padding:11px 18px;font-size:13px;font-weight:500;text-align:center;width:100%;pointer-events:auto;animation:toastIn .22s ease,toastOut .22s ease 2.7s forwards;box-shadow:var(--shadow-md);color:var(--txt)}
-@keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-@keyframes toastOut{to{opacity:0;transform:translateY(-5px)}}
 .toast-success{border-color:var(--lime);color:var(--lime);background:var(--bg-3)}
 .toast-error{border-color:var(--red);color:var(--red);background:var(--bg-3)}
+
+/* ── Modals ── */
+#modal-root{position:fixed;inset:0;z-index:300;pointer-events:none}
+.modal-backdrop{position:absolute;inset:0;background:var(--bg-overlay);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:20px;pointer-events:auto;animation:fadeIn .18s ease}
+.modal-card{width:min(100%,360px);max-height:min(82vh,640px);overflow:auto;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-xl);box-shadow:var(--shadow-lg);padding:24px 20px 20px;text-align:center;animation:fadeUp .2s ease}
+.modal-icon{width:58px;height:58px;border-radius:18px;background:var(--lime-dim);border:1px solid var(--lime-mid);color:var(--lime);display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.modal-icon svg{width:26px;height:26px}
+.modal-title{font-family:var(--font-d);font-size:28px;font-weight:800;letter-spacing:.5px;line-height:1.05;color:var(--txt);margin-bottom:10px}
+.modal-copy{font-size:14px;line-height:1.6;color:var(--txt-2);margin-bottom:18px}
+.modal-body{margin-bottom:18px}
+.modal-actions{display:flex;gap:10px}
+.modal-actions .btn{flex:1}
 
 /* ── Rest timer ── */
 #rest-timer-overlay{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;max-width:var(--max-w);margin:0 auto;background:var(--bg-overlay);backdrop-filter:blur(10px)}
@@ -77,28 +98,295 @@ img,svg{display:block;max-width:100%}
 .rest-timer-bar-fill{height:100%;background:var(--lime);border-radius:2px;transition:width 1s linear,background .5s}
 
 /* ── Hero image card ── */
-.hero-img-card{width:100%;height:210px;border-radius:var(--r-lg);background-size:cover;background-position:center;position:relative;overflow:hidden;margin-bottom:var(--gap);background-color:var(--bg-3)}
-.hero-img-card::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,var(--bg-base) 0%,rgba(0,0,0,.45) 55%,transparent 100%)}
-[data-theme="light"] .hero-img-card::after{background:linear-gradient(to top,var(--bg-base) 0%,rgba(0,0,0,.3) 55%,transparent 100%)}
-.hero-img-card-content{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;justify-content:flex-end;padding:18px}
+.hero-img-card{width:100%;height:240px;border-radius:var(--r-lg);background-size:cover;background-position:center;position:relative;overflow:hidden;margin-bottom:var(--gap);background-color:var(--bg-3);box-shadow:var(--shadow-lg);border:1px solid var(--border)}
+.hero-img-card::before{content:'';position:absolute;inset:0;background:inherit;background-size:cover;background-position:inherit;filter:brightness(0.95) saturate(1.0);transform:scale(1.03);z-index:0}
+.hero-img-card::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.3) 0%,rgba(0,0,0,.65) 60%,rgba(0,0,0,.85) 100%);z-index:1;box-shadow:inset 0 0 40px rgba(0,0,0,.4)}
+[data-theme="light"] .hero-img-card::after{background:linear-gradient(180deg,rgba(0,0,0,.25) 0%,rgba(0,0,0,.55) 60%,rgba(0,0,0,.75) 100%)}
+.hero-img-card-content{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;justify-content:flex-end;padding:24px}
 
 /* ── Error screen ── */
 .error-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60dvh;padding:40px 24px;text-align:center}
 .error-icon{font-size:48px;margin-bottom:16px;opacity:.7}
 
-/* ── PWA banner ── */
-.pwa-banner{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--lime-dim);border:1px solid var(--lime-mid);border-radius:var(--r-sm);margin-bottom:12px;cursor:pointer;transition:opacity .2s}
-.pwa-banner:hover{opacity:.85}
+/* ── PWA banner & Notifs ── */
+.pwa-banner, .notif-banner{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--r-sm);margin-bottom:12px;cursor:pointer;transition:opacity .2s}
+.pwa-banner{background:var(--lime-dim);border:1px solid var(--lime-mid)}
 .pwa-banner svg{width:16px;height:16px;color:var(--lime);flex-shrink:0}
-
-/* ── Notification banner ── */
-.notif-banner{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--blue-dim);border:1px solid var(--blue);border-radius:var(--r-sm);margin-bottom:12px}
+.notif-banner{background:var(--blue-dim);border:1px solid var(--blue)}
 .notif-banner svg{width:16px;height:16px;color:var(--blue);flex-shrink:0}
 
-/* ── Ollama status banner ── */
-.ollama-status{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:var(--r-sm);font-size:12px;font-weight:600;margin-bottom:12px;border:1px solid}
-.ollama-status.connected{background:var(--teal-dim);border-color:var(--teal);color:var(--teal)}
-.ollama-status.disconnected{background:var(--red-dim);border-color:var(--red);color:var(--red)}
-.ollama-status.checking{background:var(--amber-dim);border-color:var(--amber);color:var(--amber)}
-.ollama-dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0}
-.ollama-dot.pulse{animation:pulse 1.5s ease infinite}
+
+/* ════════════════════════════════════════════════════════════════
+   ✨ ALIGNED PREMIUM DESKTOP LAYOUT  ≥ 768px ✨
+   ════════════════════════════════════════════════════════════════ */
+@media(min-width:768px){
+  body{background:var(--page-bg)}
+
+  #app{
+    max-width:100%;
+    width:100%;
+    height:100dvh;
+    display:grid;
+    grid-template-rows:1fr;
+    /* Clean, symmetric 260px sidebar width */
+    grid-template-columns:260px 1fr; 
+    grid-template-areas:
+      "sidenav main";
+    border:none;
+    box-shadow:none;
+    overflow:hidden;
+    border-radius:0;
+  }
+
+  /* ── Topbar (desktop) ── */
+  #topbar{
+    display:none;
+    grid-area:topbar;
+    border-left:1px solid var(--border);
+    background:var(--bg-glass);
+    backdrop-filter:blur(24px);
+    -webkit-backdrop-filter:blur(24px);
+  }
+
+  #topbar-meta{
+    justify-content:center;
+    align-items:center;
+    height:100%;
+  }
+
+  /* Hide date content, show Check-in button */
+  #topbar-meta > span{
+    display:none;
+  }
+
+  #topbar-meta .topbar-checkin-btn{
+    display:flex !important;
+  }
+
+  /* Hide mobile topbar-actions on desktop */
+  #topbar-actions{
+    display:none !important;
+  }
+
+  /* Topbar Check-in button styling */
+  .topbar-checkin-btn{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:8px 16px;
+    background:none;
+    border:1px solid var(--border);
+    border-radius:10px;
+    color:var(--txt-2);
+    font-size:13px;
+    font-weight:600;
+    letter-spacing:0.3px;
+    cursor:pointer;
+    transition:all var(--transition);
+  }
+
+  .topbar-checkin-btn:hover{
+    background:var(--bg-3);
+    color:var(--txt);
+    border-color:var(--border-2);
+  }
+
+  .topbar-checkin-btn svg{
+    width:16px;
+    height:16px;
+  }
+
+  /* ── Screen root (desktop) ── */
+  #screen-root{
+    grid-area:main;
+    border-left:1px solid var(--border);
+    background:var(--bg-base);
+  }
+
+  /* ── Sidebar Nav (AGI-level Alignment and Redundancy Fix) ── */
+  #bottom-nav{
+    grid-area:sidenav;
+    width:260px; /* Matched to grid column */
+    height:100%;
+    flex-direction:column;
+    align-items:flex-start; /* Correct base alignment to the left */
+    justify-content:flex-start;
+    border-top:none;
+    border-right:1px solid var(--border);
+    background:var(--bg-1); /* Solid, sleek background */
+    padding:0; /* Precise padding controlled below */
+    overflow-y:auto;
+    overflow-x:hidden;
+  }
+  
+  /* Sleek scrollbar for sidebar */
+  #bottom-nav::-webkit-scrollbar{width:4px}
+  #bottom-nav::-webkit-scrollbar-track{background:transparent}
+  #bottom-nav::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:4px}
+
+  /* ── Sidebar Brand Header: Show TOMMYY.FIT at top ── */
+  .sidebar-brand { 
+    display:flex !important;
+    padding:24px 12px 16px 12px;
+    flex-shrink:0;
+    justify-content:center;
+    align-items:center;
+  }
+
+  .sidebar-brand .brand-text {
+    font-size:24px;
+  }
+
+  .sidebar-brand .brand-dot {
+    font-size:24px;
+  }
+
+  /* ── Sidebar Section Label (AGI Matched Alignment) ── */
+  .sidebar-section-label{
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:1.8px;
+    text-transform:uppercase;
+    color:var(--txt-3);
+    padding: 24px 12px 10px 12px; /* Precise uniform left start at 12px */
+    width: 100%;
+    flex-shrink:0;
+  }
+
+  /* ── Nav Buttons (Aligned Floating Pills) ── */
+  .nav-btn{
+    flex-direction:row;
+    justify-content:flex-start;
+    padding:12px 16px 12px 12px; /* 👈 Text start matches Section Label start */
+    margin: 2px 12px 2px 12px; /* 👈 Creates visual "pill" space */
+    gap:12px;
+    width: calc(100% - 24px); /* 👈 Accounts for left/right margin */
+    border-radius:12px; /* Smooth rounded pills */
+    color:var(--txt-2);
+    position:relative;
+    /* High-end easing animation */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  /* Remove old mobile stripe */
+  .nav-btn::before, .nav-btn::after { display:none !important; }
+
+  /* Hover State: Slide and brighten */
+  .nav-btn:hover:not(.active){
+    background:var(--bg-2);
+    color:var(--txt);
+    transform:translateX(4px); /* Elegant slide effect */
+  }
+
+  /* Active State: Glowing Pill */
+  .nav-btn.active{
+    background:var(--lime-dim);
+    color:var(--lime);
+    box-shadow: inset 0 0 0 1px var(--lime-mid);
+    transform:translateX(0);
+  }
+
+  .nav-btn svg{width:18px;height:18px;flex-shrink:0; transition: transform 0.3s ease}
+  .nav-btn:hover svg { transform: scale(1.1); }
+  
+  .nav-label{
+    font-size:14px;
+    font-weight:600;
+    letter-spacing:0.3px;
+    text-transform:none;
+    white-space:nowrap;
+  }
+
+  /* ── Topbar buttons in sidebar (desktop) ── */
+  .sidebar-topbar-actions{
+    display:flex;
+    gap:8px;
+    margin:12px 12px 20px 12px;
+    flex-shrink:0;
+    width:calc(100% - 24px);
+  }
+
+  .sidebar-topbar-actions .topbar-btn{
+    flex:1;
+    width:100%;
+    height:40px;
+    border-radius:10px;
+  }
+
+  /* ── Sidebar Footer (Matched Aligned Card Style) ── */
+  .sidebar-footer{
+    margin: auto 12px 20px 12px; /* auto-top centers visually in bottom space */
+    padding:16px;
+    background:var(--bg-2);
+    border-radius:12px;
+    border:1px solid var(--border);
+    font-size:11px;
+    font-weight:600;
+    color:var(--txt-3);
+    letter-spacing:.5px;
+    width: calc(100% - 24px); /* Matched to nav pills */
+    flex-shrink:0;
+    text-align:center;
+    transition: background 0.3s;
+  }
+  .sidebar-footer:hover { background: var(--bg-3); }
+  .sidebar-footer a{color:var(--lime); opacity:.8; text-decoration: none;}
+  .sidebar-footer a:hover{opacity:1; text-decoration: underline;}
+
+  /* ── Topbar buttons in sidebar (desktop) ── */
+  .sidebar-topbar-actions{
+    display:flex;
+    gap:8px;
+    margin:12px 12px 20px 12px;
+    flex-shrink:0;
+    width:calc(100% - 24px);
+  }
+
+  .sidebar-topbar-actions .topbar-btn{
+    flex:1;
+    width:100%;
+    height:40px;
+    border-radius:10px;
+  }
+
+  /* Show Check-in button in sidebar, hidden from topbar */
+  .nav-btn[data-route="checkin"]{
+    display:flex;
+  }
+
+  /* ── Screen padding (desktop) ── */
+  .screen{
+    padding:36px 48px 48px; /* Bigger breathing room on desktop */
+    min-height:0;
+    max-width:none;
+    width:100%;
+  }
+  .screen-full{
+    padding:0;
+    min-height:100vh;
+    max-width:none;
+  }
+
+  /* ── Modals, Toasts, Rest Timers (Offset for 260px sidebar) ── */
+  #toast-root{
+    bottom:32px;
+    left:calc(260px + 50%);
+    transform:translateX(-50%);
+    width:min(520px,calc(100vw - 260px - 64px));
+  }
+  #rest-timer-overlay{
+    left:260px;
+    max-width:calc(100% - 260px);
+    margin:0;
+  }
+  #modal-root .modal-backdrop{
+    left:260px;
+  }
+}
+
+/* ── Animations ── */
+@keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateY(-5px)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes barLoad{from{transform:scaleX(0)}to{transform:scaleX(1)}}

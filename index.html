@@ -1,133 +1,218 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
-  <meta name="theme-color" content="#C8FF00" media="(prefers-color-scheme:dark)">
-  <meta name="theme-color" content="#3E8C00" media="(prefers-color-scheme:light)">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="tommyy.fit">
-  <meta name="description" content="tommyy.fit v4 - static performance tracker for discipline, habits, workouts, nutrition, and progress.">
-  <meta property="og:title" content="tommyy.fit v4 - Discipline. Performance. Transformation.">
-  <meta property="og:description" content="Static fitness tracker with habits, workouts, nutrition, progress, and copy-ready AI exports for any chatbot.">
-  <meta property="og:image" content="https://images.pexels.com/photos/1552242/pexels-photo-1552242.jpeg?auto=compress&cs=tinysrgb&w=800">
-  <meta property="og:type" content="website">
-  <meta name="twitter:card" content="summary_large_image">
-  <link rel="canonical" href="https://beacons.ai/tommyy.fit">
-  <link rel="manifest" href="./manifest.json">
-  <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="./assets/icon.svg">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#C8FF00" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#3E8C00" media="(prefers-color-scheme: light)" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="tommyy.fit" />
+  <meta
+    name="description"
+    content="tommyy.fit v4 - static performance tracker for discipline, habits, workouts, nutrition, and progress."
+  />
+
+  <meta property="og:title" content="tommyy.fit v4 - Discipline. Performance. Transformation." />
+  <meta
+    property="og:description"
+    content="Static fitness tracker with habits, workouts, nutrition, progress, and copy-ready AI exports for any chatbot."
+  />
+  <meta
+    property="og:image"
+    content="https://images.pexels.com/photos/1552242/pexels-photo-1552242.jpeg?auto=compress&cs=tinysrgb&w=800"
+  />
+  <meta property="og:type" content="website" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <link rel="canonical" href="https://beacons.ai/tommyy.fit" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" href="./assets/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="./assets/icon.svg" />
+
   <title>tommyy.fit v4 - Discipline. Performance. Transformation.</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;800;900&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;800;900&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;600;700&display=swap"
+    rel="stylesheet"
+  />
 
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 
-  <link rel="stylesheet" href="css/variables.css">
-  <link rel="stylesheet" href="css/layout.css">
-  <link rel="stylesheet" href="css/base.css">
-  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/components.css" />
 </head>
+
 <body>
+  <div id="app">
+    <div id="loader" aria-label="Loading screen">
+      <div
+        class="loader-bg"
+        id="loader-bg"
+        style="background-image: url('https://images.pexels.com/photos/1552242/pexels-photo-1552242.jpeg?auto=compress&cs=tinysrgb&w=400');"
+      ></div>
+      <div class="loader-over"></div>
 
-<div id="app">
-  <div id="loader">
-    <div class="loader-bg" id="loader-bg" style="background-image:url('https://images.pexels.com/photos/1552242/pexels-photo-1552242.jpeg?auto=compress&cs=tinysrgb&w=400')"></div>
-    <div class="loader-over"></div>
-    <div class="loader-inner">
-      <div class="loader-brand">TOMMYY<span>.FIT</span></div>
-      <div class="loader-tagline">Discipline &middot; Performance &middot; Transformation</div>
-      <div class="loader-bar"><div class="loader-bar-fill"></div></div>
-      <div class="loader-version">v4.0 by <a href="https://beacons.ai/tommyy.fit" target="_blank" rel="noopener noreferrer">tommyy.fit</a></div>
+      <div class="loader-inner">
+        <div class="loader-brand">TOMMYY<span>.FIT</span></div>
+        <div class="loader-tagline">Discipline &middot; Performance &middot; Transformation</div>
+        <div class="loader-bar" aria-hidden="true">
+          <div class="loader-bar-fill"></div>
+        </div>
+        <div class="loader-version">
+          v4.0 by
+          <a href="https://beacons.ai/tommyy.fit" target="_blank" rel="noopener noreferrer">
+            tommyy.fit
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <header id="topbar" class="hidden" role="banner">
+      <div class="topbar-inner">
+        <a
+          class="brand"
+          href="https://beacons.ai/tommyy.fit"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="tommyy.fit brand link"
+        >
+          <span class="brand-text">TOMMYY</span><span class="brand-dot">.FIT</span>
+        </a>
+
+        <div id="topbar-meta"></div>
+        <div id="topbar-actions"></div>
+      </div>
+    </header>
+
+    <main id="screen-root" class="hidden" role="main"></main>
+
+    <nav id="bottom-nav" class="hidden" role="navigation" aria-label="Primary navigation">
+      <div class="sidebar-brand">
+        <a
+          class="brand"
+          href="https://beacons.ai/tommyy.fit"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="tommyy.fit brand link"
+        >
+          <span class="brand-text">TOMMYY</span><span class="brand-dot">.FIT</span>
+        </a>
+      </div>
+
+      <div class="sidebar-section-label">Navigation</div>
+
+      <button class="nav-btn active" data-route="dashboard" type="button" aria-label="Home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="3" width="7" height="7" rx="1.5" />
+          <rect x="14" y="3" width="7" height="7" rx="1.5" />
+          <rect x="3" y="14" width="7" height="7" rx="1.5" />
+          <rect x="14" y="14" width="7" height="7" rx="1.5" />
+        </svg>
+        <span class="nav-label">Home</span>
+      </button>
+
+      <button class="nav-btn" data-route="checkin" type="button" aria-label="Check-in">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+        </svg>
+        <span class="nav-label">Check-in</span>
+      </button>
+
+      <button class="nav-btn" data-route="workout" type="button" aria-label="Train">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M6 4v16M18 4v16M2 9h4M18 9h4M2 15h4M18 15h4M6 12h12" />
+        </svg>
+        <span class="nav-label">Train</span>
+      </button>
+
+      <button class="nav-btn" data-route="habits" type="button" aria-label="Habits">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+          <polyline points="22 4 12 14.01 9 11.01" />
+        </svg>
+        <span class="nav-label">Habits</span>
+      </button>
+
+      <button class="nav-btn" data-route="more" type="button" aria-label="More">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="5" cy="12" r="1.5" fill="currentColor" />
+          <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+          <circle cx="19" cy="12" r="1.5" fill="currentColor" />
+        </svg>
+        <span class="nav-label">More</span>
+      </button>
+
+      <div class="sidebar-footer">
+        v4.0 &middot;
+        <a href="https://beacons.ai/tommyy.fit" target="_blank" rel="noopener noreferrer">tommyy.fit</a>
+      </div>
+    </nav>
+  </div>
+
+  <div id="toast-root" aria-live="polite" aria-atomic="true"></div>
+  <div id="modal-root"></div>
+
+  <div id="rest-timer-overlay" class="hidden" aria-hidden="true">
+    <div class="rest-timer-card" role="dialog" aria-modal="true" aria-labelledby="rt-label-title">
+      <div class="t-label" id="rt-label-title" style="margin-bottom: 10px;">REST TIMER</div>
+      <div class="rest-timer-num" id="rt-num">120</div>
+      <div class="rest-timer-label" id="rt-label">seconds remaining</div>
+
+      <div class="rest-timer-bar" aria-hidden="true">
+        <div class="rest-timer-bar-fill" id="rt-bar" style="width: 100%;"></div>
+      </div>
+
+      <button class="btn btn-ghost" id="rt-skip" type="button" style="margin-top: 16px; width: auto; padding: 8px 20px; font-size: 12px;">
+        SKIP
+      </button>
     </div>
   </div>
 
-  <header id="topbar" class="hidden">
-    <div class="topbar-inner">
-      <a class="brand" href="https://beacons.ai/tommyy.fit" target="_blank" rel="noopener noreferrer">
-        <span class="brand-text">TOMMYY</span><span class="brand-dot">.FIT</span>
-      </a>
-      <div id="topbar-meta"></div>
-      <div id="topbar-actions"></div>
+  <noscript>
+    <div style="padding: 20px; color: white; text-align: center;">
+      This app needs JavaScript enabled to run.
     </div>
-  </header>
+  </noscript>
 
-  <main id="screen-root" class="hidden"></main>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 
-  <nav id="bottom-nav" class="hidden">
-    <button class="nav-btn active" data-route="dashboard">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-      <span class="nav-label">Home</span>
-    </button>
-    <button class="nav-btn" data-route="checkin">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-      <span class="nav-label">Check-in</span>
-    </button>
-    <button class="nav-btn" data-route="workout">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4v16M18 4v16M2 9h4M18 9h4M2 15h4M18 15h4M6 12h12"/></svg>
-      <span class="nav-label">Train</span>
-    </button>
-    <button class="nav-btn" data-route="habits">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-      <span class="nav-label">Habits</span>
-    </button>
-    <button class="nav-btn" data-route="more">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/></svg>
-      <span class="nav-label">More</span>
-    </button>
-  </nav>
-</div>
-
-<div id="toast-root"></div>
-
-<div id="rest-timer-overlay" class="hidden">
-  <div class="rest-timer-card">
-    <div class="t-label" style="margin-bottom:10px">REST TIMER</div>
-    <div class="rest-timer-num" id="rt-num">120</div>
-    <div class="rest-timer-label" id="rt-label">seconds remaining</div>
-    <div class="rest-timer-bar">
-      <div class="rest-timer-bar-fill" id="rt-bar" style="width:100%"></div>
-    </div>
-    <button class="btn btn-ghost" id="rt-skip" style="margin-top:16px;width:auto;padding:8px 20px;font-size:12px">SKIP</button>
-  </div>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
-
-<script src="js/config.js"></script>
-<script src="js/store.js"></script>
-<script src="js/router.js"></script>
-<script src="js/engine/score.js"></script>
-<script src="js/engine/workout.js"></script>
-<script src="js/engine/missions.js"></script>
-<script src="js/engine/quotes.js"></script>
-<script src="js/engine/achievements.js"></script>
-<script src="js/engine/overload.js"></script>
-<script src="js/engine/habits.js"></script>
-<script src="js/components/icons.js"></script>
-<script src="js/components/ui.js"></script>
-<script src="js/components/charts.js"></script>
-<script src="js/screens/onboarding.js"></script>
-<script src="js/screens/dashboard.js"></script>
-<script src="js/screens/checkin.js"></script>
-<script src="js/screens/missions.js"></script>
-<script src="js/screens/workout.js"></script>
-<script src="js/screens/habits.js"></script>
-<script src="js/screens/nutrition.js"></script>
-<script src="js/screens/progress.js"></script>
-<script src="js/screens/history.js"></script>
-<script src="js/screens/measurements.js"></script>
-<script src="js/screens/weekly-review.js"></script>
-<script src="js/screens/achievements.js"></script>
-<script src="js/screens/coach.js"></script>
-<script src="js/screens/profile.js"></script>
-<script src="js/screens/more.js"></script>
-<script src="js/app.js"></script>
-
+  <script src="js/config.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/router.js"></script>
+  <script src="js/engine/score.js"></script>
+  <script src="js/engine/workout.js"></script>
+  <script src="js/engine/missions.js"></script>
+  <script src="js/engine/quotes.js"></script>
+  <script src="js/engine/achievements.js"></script>
+  <script src="js/engine/overload.js"></script>
+  <script src="js/engine/habits.js"></script>
+  <script src="js/components/icons.js"></script>
+  <script src="js/components/ui.js"></script>
+  <script src="js/components/charts.js"></script>
+  <script src="js/screens/onboarding.js"></script>
+  <script src="js/screens/dashboard.js"></script>
+  <script src="js/screens/checkin.js"></script>
+  <script src="js/screens/missions.js"></script>
+  <script src="js/screens/workout.js"></script>
+  <script src="js/screens/habits.js"></script>
+  <script src="js/screens/nutrition.js"></script>
+  <script src="js/screens/progress.js"></script>
+  <script src="js/screens/history.js"></script>
+  <script src="js/screens/measurements.js"></script>
+  <script src="js/screens/weekly-review.js"></script>
+  <script src="js/screens/achievements.js"></script>
+  <script src="js/screens/coach.js"></script>
+  <script src="js/screens/profile.js"></script>
+  <script src="js/screens/more.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>

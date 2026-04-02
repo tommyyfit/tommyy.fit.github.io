@@ -1,5 +1,5 @@
 /* ================================================================
-   TOMMYY.FIT v3 — Design Tokens — Dark + Light (Complete)
+   TOMMYY.FIT v4 — Design Tokens — Dark + Light (Complete)
    ================================================================ */
 :root, [data-theme="dark"] {
   --bg-base:#07070A; --bg-1:#0E0E13; --bg-2:#15151C; --bg-3:#1B1B24; --bg-4:#222230; --bg-5:#2C2C3C;
@@ -13,7 +13,7 @@
   --teal:#38D4BC; --teal-dim:rgba(56,212,188,.11);
   --green:#46DC78; --green-dim:rgba(70,220,120,.11);
   --orange:#FF8830; --orange-dim:rgba(255,136,48,.11);
-  --txt:#ECEEF8; --txt-2:#8080A4; --txt-3:#404056; --txt-inv:#07070A;
+  --txt:#F2F4FF; --txt-2:#B4B9D0; --txt-3:#8B92AC; --txt-inv:#07070A;
   --input-bg:#0E0E13; --input-border:#22222E;
   --loader-over:rgba(7,7,10,0.75);
   --loader-text:rgba(255,255,255,0.9); --loader-sub:rgba(255,255,255,0.45); --loader-bar:rgba(255,255,255,0.10);
@@ -43,6 +43,7 @@
   --font-d:'Barlow Condensed',sans-serif; --font-b:'DM Sans',sans-serif; --font-m:'JetBrains Mono',monospace;
   --gap:12px; --gap-lg:20px; --r:14px; --r-sm:8px; --r-lg:20px; --r-xl:28px;
   --nav-h:66px; --top-h:54px; --max-w:480px;
+  --sidebar-w:220px;
   --transition:.18s ease; --transition-slow:.35s ease;
 }
 .chip-lime   {background:var(--lime-dim);  color:var(--lime);}

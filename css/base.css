@@ -36,5 +36,3 @@
 /* Skeleton */
 .skeleton{background:linear-gradient(90deg,var(--bg-3) 25%,var(--bg-4) 50%,var(--bg-3) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:var(--r-sm)}
 .spinner{width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--lime);border-radius:50%;animation:spin .8s linear infinite}
-/* AI typing cursor */
-.ai-cursor::after{content:'▋';animation:cursor-blink .7s ease infinite;color:var(--lime)}
