@@ -63,7 +63,7 @@ TF.Screens.habits = function(root) {
     return '<button class="habit-row ' + (habit.done ? 'done' : '') + '" data-habit-id="' + habit.id + '" type="button" aria-pressed="' + (habit.done ? 'true' : 'false') + '" aria-label="' + habit.label + '">' +
       '<div class="habit-row-main">' +
         '<div class="habit-check ' + (habit.done ? 'on' : '') + '">' +
-          (habit.done ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><polyline points="20 6 9 17 4 12"/></svg>' : '') +
+          (habit.done ? '<span class="habit-check-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><polyline points="20 6 9 17 4 12"/></svg></span>' : '') +
         '</div>' +
         '<div class="habit-emoji">' + TF.UI.escapeHTML(habit.emoji) + '</div>' +
         '<div style="flex:1;min-width:0">' +
@@ -170,6 +170,14 @@ TF.Screens.habits = function(root) {
     });
 
     TF.UI.haptic(50);
+
+    /* v5.7 micro-animation: scale + glow on the toggled row before re-draw */
+    if (!current) {
+      row.classList.add('just-toggled');
+      row.style.transform = 'scale(1.025)';
+      setTimeout(function() { row.style.transform = ''; }, 320);
+    }
+
     if (!current && xpEarned > 0 && definition) {
       TF.UI.toast(definition.label + ' +' + xpEarned + ' XP', 'success');
     }
@@ -186,7 +194,7 @@ TF.Screens.habits = function(root) {
       }, 800);
     });
 
-    draw();
+    setTimeout(function() { draw(); }, 120);
   }
 
   root.onclick = function(event) {

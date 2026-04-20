@@ -1,12 +1,12 @@
 /* ================================================================
-   CONFIG v5.6 - tommyy.fit
+   CONFIG v5.7 - tommyy.fit
    ================================================================ */
 var TF = window.TF || {};
 window.TF = TF;
 TF.Screens = TF.Screens || {};
 
 TF.Config = {
-  version: 'v5.6',
+  version: 'v5.7',
   brand: 'tommyy.fit',
   brandUrl: 'https://beacons.ai/tommyy.fit',
   appName: 'TOMMYY.FIT',
@@ -24,9 +24,7 @@ TF.Config = {
     mindset: 'https://images.pexels.com/photos/3253501/pexels-photo-3253501.jpeg?auto=compress&cs=tinysrgb&w=1600&dpr=2',
     habits: 'https://images.pexels.com/photos/3823039/pexels-photo-3823039.jpeg?auto=compress&cs=tinysrgb&w=1600&dpr=2'
   },
-  QuoteAPI: {
-    stoic: 'https://stoic-quotes.com/api/quote'
-  },
+  QuoteAPI: { stoic: 'https://stoic-quotes.com/api/quote' },
   FoodAPI: 'https://world.openfoodfacts.org/cgi/search.pl',
   BackupReminderOptions: [3, 7, 14, 30],
   ScoreThresholds: { elite: 88, sharp: 74, solid: 58, low: 42 },
@@ -37,6 +35,8 @@ TF.Config = {
   CalorieMultipliers: { muscle: 36, fatLoss: 29, discipline: 33, maintenance: 33 },
   ProteinPerKg: { muscle: 2.0, fatLoss: 2.2, discipline: 1.8 },
   DataRetentionDays: 90,
+  /* Compound exercise keywords for smart rest timer auto-detection */
+  CompoundKeywords: ['squat', 'deadlift', 'bench press', 'overhead press', 'row', 'pull-up', 'pullup', 'chin-up', 'chinup', 'dip', 'press', 'clean', 'snatch', 'lunge', 'hip thrust', 'rdl', 'sumo', 'trap bar'],
   DefaultHabits: [
     { id: 'no_alcohol', emoji: '\u{1F6AB}', label: 'No alcohol', xp: 15 },
     { id: 'cold_shower', emoji: '\u{1F6BF}', label: 'Cold shower', xp: 20 },

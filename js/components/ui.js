@@ -261,10 +261,10 @@ TF.UI = (function () {
   }
 
   /* ── Progress bar ── */
-  function bar(pct, color, lg) {
+  function bar(pct, color, lg, extraClass) {
     pct = Math.min(Math.max(pct || 0, 0), 1);
-    var cls = lg ? 'bar-track bar-track-lg' : 'bar-track';
-    var fCls = lg ? 'bar-fill bar-fill-lg' : 'bar-fill';
+    var cls  = lg ? 'bar-track bar-track-lg' : 'bar-track';
+    var fCls = (lg ? 'bar-fill bar-fill-lg' : 'bar-fill') + (extraClass ? ' ' + extraClass : '');
     return '<div class="' + cls + '"><div class="' + fCls + '" style="width:' + Math.round(pct * 100) + '%;background:' + color + '"></div></div>';
   }
 
@@ -399,30 +399,56 @@ TF.UI = (function () {
   /* ── Spinner ── */
   function spinner() { return '<div style="display:flex;justify-content:center;padding:32px"><div class="spinner"></div></div>'; }
 
-  /* ── Rest timer ── */
+  /* ── Smart Rest Timer v5.7 ── */
   var _timerInterval = null, _timerStart = null, _timerDuration = null;
+
+  function _isCompoundExercise(exerciseName) {
+    if (!exerciseName) return false;
+    var name = exerciseName.toLowerCase();
+    var keywords = (TF.Config && TF.Config.CompoundKeywords) || ['squat','deadlift','bench','press','row','pull-up','pullup','chin','dip','clean','snatch','lunge','hip thrust','rdl'];
+    return keywords.some(function (kw) { return name.indexOf(kw) !== -1; });
+  }
+
   function startRestTimer(seconds, exerciseName, onDone) {
     if (!seconds || seconds <= 0) return;
-    _timerDuration = seconds; _timerStart = Date.now();
+
+    /* Auto-detect set type */
+    var isCompound = _isCompoundExercise(exerciseName);
+    /* If caller passed default 90 and we know it's isolation, suggest 60 */
+    var suggestedSeconds = isCompound ? Math.max(seconds, 90) : Math.min(seconds, 60);
+    var finalSeconds = suggestedSeconds;
+
+    _timerDuration = finalSeconds; _timerStart = Date.now();
+
     var overlay = document.getElementById('rest-timer-overlay');
-    var numEl = document.getElementById('rt-num');
-    var barEl = document.getElementById('rt-bar');
+    var numEl   = document.getElementById('rt-num');
+    var barEl   = document.getElementById('rt-bar');
     var labelEl = document.getElementById('rt-label');
     var titleEl = document.getElementById('rt-label-title');
     var skipBtn = document.getElementById('rt-skip');
     if (!overlay) return;
-    if (titleEl) titleEl.textContent = exerciseName ? 'REST — ' + exerciseName.toUpperCase() : 'REST TIMER';
+
+    /* Type badge */
+    var badgeClass = isCompound ? 'rt-type-compound' : 'rt-type-isolation';
+    var badgeText  = isCompound ? 'COMPOUND · 90s' : 'ISOLATION · 60s';
+    if (titleEl) {
+      titleEl.innerHTML =
+        '<div class="rt-type-badge ' + badgeClass + '">' + badgeText + '</div>' +
+        '<div style="font-size:11px;font-weight:700;letter-spacing:.8px;color:var(--txt-3);margin-top:4px">' +
+          (exerciseName ? exerciseName.toUpperCase() : 'REST TIMER') +
+        '</div>';
+    }
+
     overlay.classList.remove('hidden');
     overlay.setAttribute('aria-hidden', 'false');
+
     if (skipBtn) {
-      skipBtn.onclick = function () {
-        stopRestTimer();
-        haptic(40);
-      };
+      skipBtn.onclick = function () { stopRestTimer(); haptic(40); };
     }
     clearInterval(_timerInterval);
 
-    // Beep at end via Web Audio
+    var _hapticWarningDone = false;
+
     function beep() {
       try {
         var ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -432,31 +458,96 @@ TF.UI = (function () {
         gain.gain.setValueAtTime(.5, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + 0.6);
         osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.6);
-      } catch (e) { }
+      } catch (e) {}
     }
 
     _timerInterval = setInterval(function () {
-      var elapsed = (Date.now() - _timerStart) / 1000;
-      var remaining = Math.max(0, seconds - elapsed);
-      if (numEl) numEl.textContent = Math.ceil(remaining);
-      if (barEl) barEl.style.width = (remaining / seconds * 100) + '%';
+      var elapsed   = (Date.now() - _timerStart) / 1000;
+      var remaining = Math.max(0, finalSeconds - elapsed);
+      var ceil      = Math.ceil(remaining);
+
+      if (numEl) numEl.textContent = ceil;
+      if (barEl) barEl.style.width = (remaining / finalSeconds * 100) + '%';
       if (labelEl) labelEl.textContent = remaining > 0 ? 'seconds remaining' : 'done!';
-      if (barEl) { barEl.style.background = remaining < 10 ? 'var(--red)' : remaining < 30 ? 'var(--amber)' : 'var(--lime)'; }
-      if (numEl) { numEl.style.color = remaining < 10 ? 'var(--red)' : remaining < 30 ? 'var(--amber)' : 'var(--lime)'; }
+
+      /* Color transitions */
+      var clr = remaining < 10 ? 'var(--red)' : remaining < 30 ? 'var(--amber)' : 'var(--lime)';
+      if (barEl) barEl.style.background = clr;
+      if (numEl) numEl.style.color = clr;
+
+      /* Haptic pulse at 10-second warning */
+      if (!_hapticWarningDone && remaining <= 10 && remaining > 9.5) {
+        _hapticWarningDone = true;
+        haptic(30);
+        setTimeout(function () { haptic(30); }, 150);
+        setTimeout(function () { haptic(30); }, 300);
+        if (numEl) {
+          numEl.classList.add('rt-pulse');
+          setTimeout(function () { numEl.classList.remove('rt-pulse'); }, 500);
+        }
+      }
+
       if (remaining <= 0) {
         clearInterval(_timerInterval);
         beep(); haptic(200);
         if (onDone) onDone();
-        setTimeout(function () { overlay.classList.add('hidden'); }, 1500);
+        setTimeout(function () { overlay.classList.add('hidden'); overlay.setAttribute('aria-hidden', 'true'); }, 1500);
       }
     }, 200);
   }
+
   function stopRestTimer() {
     clearInterval(_timerInterval);
     var overlay = document.getElementById('rest-timer-overlay');
-    if (overlay) {
-      overlay.classList.add('hidden');
-      overlay.setAttribute('aria-hidden', 'true');
+    if (overlay) { overlay.classList.add('hidden'); overlay.setAttribute('aria-hidden', 'true'); }
+  }
+
+  /* ── Animated Score Ring v5.7 ── */
+  function animateScoreRing(scoreVal, opts) {
+    opts = opts || {};
+    var wrap   = document.getElementById(opts.wrapperId || 'score-ring-wrap');
+    var fillEl = document.getElementById(opts.fillId    || 'score-ring-fill');
+    var numEl  = document.getElementById(opts.numId     || 'score-ring-num');
+    if (!wrap || !fillEl) return;
+
+    /* Colour interpolation: red → amber → lime by score */
+    function scoreColor(s) {
+      if (s >= 74) return '#C8FF00';
+      if (s >= 52) return '#FFB830';
+      return '#FF5050';
+    }
+
+    var color  = scoreColor(scoreVal);
+    var size   = opts.size || 180;
+    var stroke = opts.stroke || 12;
+    var r      = (size - stroke) / 2;
+    var circ   = 2 * Math.PI * r;
+    var targetOffset = circ - (scoreVal / 100) * circ;
+
+    /* Set start state */
+    fillEl.style.strokeDasharray  = circ.toFixed(2);
+    fillEl.style.strokeDashoffset = circ.toFixed(2);
+    fillEl.style.stroke = color;
+
+    /* Animate after next frame so transition fires */
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        fillEl.style.strokeDashoffset = targetOffset.toFixed(2);
+      });
+    });
+
+    /* Count-up number */
+    if (numEl) {
+      numEl.style.color = color;
+      var current = 0;
+      var steps   = 50;
+      var stepMs  = 1200 / steps;
+      var interval = setInterval(function () {
+        current = Math.min(current + scoreVal / steps, scoreVal);
+        numEl.textContent = Math.round(current);
+        numEl.style.color = scoreColor(Math.round(current));
+        if (current >= scoreVal) clearInterval(interval);
+      }, stepMs);
     }
   }
 
@@ -477,7 +568,7 @@ TF.UI = (function () {
   }
 
   return {
-    haptic: haptic, toast: toast, confetti: confetti, animateScore: animateScore,
+    haptic: haptic, toast: toast, confetti: confetti, animateScore: animateScore, animateScoreRing: animateScoreRing,
     bar: bar, ring: ring, insightCard: insightCard, secHdr: secHdr,
     heroImg: heroImg, setHeroImg: setHeroImg,
     xpRow: xpRow, formatDate: formatDate, dayLabel: dayLabel,

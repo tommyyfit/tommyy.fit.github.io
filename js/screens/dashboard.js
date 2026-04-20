@@ -138,38 +138,98 @@ TF.Screens.dashboard = function(root) {
   }
 
   function scoreHero() {
-    var score = TF.Score.daily(input);
-    var recovery = TF.Score.recovery(input);
+    var score      = TF.Score.daily(input);
+    var recovery   = TF.Score.recovery(input);
     var discipline = TF.Score.discipline(input);
-    var color = TF.Score.color(score);
-    var label = TF.Score.label(score);
-    var bg = TF.Score.bg(score);
-    var glow = TF.Score.glow(score);
+    var focus      = TF.Score.focus(input);
+    var label      = TF.Score.label(score);
+    var glow       = TF.Score.glow(score);
+
+    /* SVG ring geometry */
+    var size   = 180, stroke = 12;
+    var r      = (size - stroke) / 2;
+    var circ   = 2 * Math.PI * r;
 
     return '<div class="score-hero dashboard-score-panel" id="score-hero-el">' +
       '<div class="score-hero-glow" style="background:' + glow + '"></div>' +
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">' +
         '<div class="t-label">DAILY FOCUS SCORE</div>' +
         scoreTrend() +
       '</div>' +
-      '<div style="display:flex;align-items:flex-end;gap:12px">' +
-        '<div class="score-num" id="score-num-el" style="color:' + color + '">0</div>' +
-        '<div style="padding-bottom:6px">' +
-          '<div><span class="score-badge" style="background:' + bg + ';color:' + color + '">' + label + '</span></div>' +
-          sparkline() +
+
+      /* ── Animated Ring ── */
+      '<div class="score-ring-wrap" id="score-ring-wrap" role="button" tabindex="0" aria-label="View score breakdown">' +
+        '<div class="score-ring-inner">' +
+          '<svg class="score-ring-svg" width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '" aria-hidden="true">' +
+            '<circle class="score-ring-track" fill="none"' +
+              ' cx="' + (size/2) + '" cy="' + (size/2) + '" r="' + r + '"' +
+              ' stroke="var(--bg-5)" stroke-width="' + stroke + '"/>' +
+            '<circle id="score-ring-fill" class="score-ring-fill" fill="none"' +
+              ' cx="' + (size/2) + '" cy="' + (size/2) + '" r="' + r + '"' +
+              ' stroke="var(--lime)" stroke-width="' + stroke + '"' +
+              ' stroke-linecap="round"' +
+              ' stroke-dasharray="' + circ.toFixed(2) + '"' +
+              ' stroke-dashoffset="' + circ.toFixed(2) + '"/>' +
+          '</svg>' +
+          '<div class="score-ring-label">' +
+            '<div class="score-ring-num" id="score-ring-num">0</div>' +
+            '<div class="score-ring-sub">' + label + '</div>' +
+            '<div class="score-ring-tap-hint">tap to expand</div>' +
+          '</div>' +
         '</div>' +
       '</div>' +
-      '<div class="score-subs">' +
-        '<div class="score-sub"><div class="score-sub-val" style="color:var(--blue)">' + recovery + '</div><div class="score-sub-label">Recovery</div></div>' +
+
+      '<div class="score-subs" style="margin-top:16px">' +
+        '<div class="score-sub"><div class="score-sub-val" style="color:var(--blue)">'   + recovery   + '</div><div class="score-sub-label">Recovery</div></div>' +
         '<div class="score-divider"></div>' +
-        '<div class="score-sub"><div class="score-sub-val" style="color:var(--amber)">' + discipline + '</div><div class="score-sub-label">Discipline</div></div>' +
+        '<div class="score-sub"><div class="score-sub-val" style="color:var(--amber)">'  + discipline + '</div><div class="score-sub-label">Discipline</div></div>' +
         '<div class="score-divider"></div>' +
         '<div class="score-sub"><div class="score-sub-val" style="color:var(--purple)">' + input.sleepQuality + '/10</div><div class="score-sub-label">Sleep</div></div>' +
       '</div>' +
-      '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;font-weight:700;letter-spacing:.4px;color:' + color + '">' +
+      '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;font-weight:700;letter-spacing:.4px;color:' + TF.Score.color(score) + '">' +
         'Next move: ' + TF.Score.trainingRec(recovery) +
       '</div>' +
     '</div>';
+  }
+
+  function openScoreBreakdownModal() {
+    if (!input) return;
+    var score      = TF.Score.daily(input);
+    var recovery   = TF.Score.recovery(input);
+    var discipline = TF.Score.discipline(input);
+    var focus      = TF.Score.focus(input);
+    var sleepQ     = input.sleepQuality || 0;
+    var color      = TF.Score.color(score);
+
+    function brow(label, val, maxVal, clr) {
+      var pct = Math.round((val / maxVal) * 100);
+      return '<div class="score-breakdown-row">' +
+        '<div>' +
+          '<div class="score-breakdown-label">' + label + '</div>' +
+          '<div class="score-breakdown-bar"><div class="score-breakdown-bar-fill" style="width:' + pct + '%;background:' + clr + '"></div></div>' +
+        '</div>' +
+        '<div class="score-breakdown-val" style="color:' + clr + '">' + val + '</div>' +
+      '</div>';
+    }
+
+    var content = '<div class="score-breakdown-modal">' +
+      '<div style="text-align:center;margin-bottom:20px">' +
+        '<div style="font-family:var(--font-d);font-size:64px;font-weight:900;line-height:.9;color:' + color + '">' + score + '</div>' +
+        '<div style="margin-top:6px"><span class="score-badge" style="background:' + TF.Score.bg(score) + ';color:' + color + '">' + TF.Score.label(score) + '</span></div>' +
+        sparkline() +
+      '</div>' +
+      brow('Daily Score',  score,      100, color) +
+      brow('Focus',        focus,      100, 'var(--lime)') +
+      brow('Recovery',     recovery,   100, 'var(--blue)') +
+      brow('Discipline',   discipline, 100, 'var(--amber)') +
+      brow('Sleep Quality', sleepQ,    10,  'var(--purple)') +
+      '<div style="margin-top:16px;padding:12px;background:var(--bg-3);border-radius:var(--r-sm);font-size:12px;color:var(--txt-2);line-height:1.5">' +
+        '<strong style="color:' + color + '">Training recommendation:</strong><br>' +
+        TF.Score.trainingRec(recovery) +
+      '</div>' +
+    '</div>';
+
+    TF.UI.modal({ title: 'Score Breakdown', content: content, confirmText: 'Close', onConfirm: function() { TF.UI.closeModal(); } });
   }
 
   function checkinCard() {
@@ -329,18 +389,18 @@ TF.Screens.dashboard = function(root) {
     dashboardHero() +
     '<div class="dashboard-overview-grid">' +
       '<div class="dashboard-main-stack">' +
-        (input ? scoreHero() : checkinCard()) +
-        '<div class="dashboard-xp-wrap">' + TF.UI.xpRow(profile) + '</div>' +
+        '<div class="stagger-card">' + (input ? scoreHero() : checkinCard()) + '</div>' +
+        '<div class="stagger-card dashboard-xp-wrap">' + TF.UI.xpRow(profile) + '</div>' +
       '</div>' +
       '<div class="dashboard-side-stack">' +
-        missionSummary() +
-        nextWorkoutCard() +
-        habitsSummary() +
+        '<div class="stagger-card">' + missionSummary()   + '</div>' +
+        '<div class="stagger-card">' + nextWorkoutCard()  + '</div>' +
+        '<div class="stagger-card">' + habitsSummary()    + '</div>' +
       '</div>' +
     '</div>' +
     starterGuide() +
-    (input ? '<div class="section">' + TF.UI.secHdr('Coach Insights') + TF.Score.insights(input, nutrition).slice(0, 3).map(TF.UI.insightCard).join('') + '</div>' : '') +
-    '<div class="section">' +
+    (input ? '<div class="section stagger-card">' + TF.UI.secHdr('Coach Insights') + TF.Score.insights(input, nutrition).slice(0, 3).map(TF.UI.insightCard).join('') + '</div>' : '') +
+    '<div class="section stagger-card">' +
       TF.UI.secHdr('Daily Dispatch') +
       '<div id="quote-card" class="quote-card"><div class="t-hint" style="font-style:italic;animation:pulse 1.4s infinite">Forging today&#39;s dispatch...</div></div>' +
     '</div>' +
@@ -380,8 +440,17 @@ TF.Screens.dashboard = function(root) {
 
   if (input) {
     setTimeout(function() {
-      TF.UI.animateScore(root.querySelector('#score-num-el'), TF.Score.daily(input), TF.Score.color(TF.Score.daily(input)));
-    }, 100);
+      TF.UI.animateScoreRing(TF.Score.daily(input));
+    }, 120);
+
+    /* Tap ring → score breakdown modal */
+    var ringWrap = root.querySelector('#score-ring-wrap');
+    if (ringWrap) {
+      ringWrap.addEventListener('click', openScoreBreakdownModal);
+      ringWrap.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openScoreBreakdownModal(); }
+      });
+    }
   }
 
   var topCheckinBtn = root.querySelector('#btn-checkin-top');

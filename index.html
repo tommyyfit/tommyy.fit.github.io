@@ -11,10 +11,10 @@
   <meta name="apple-mobile-web-app-title" content="tommyy.fit" />
   <meta
     name="description"
-    content="tommyy.fit v5.6 - static performance tracker for discipline, habits, workouts, nutrition, and progress."
+    content="tommyy.fit v5.7 - static performance tracker for discipline, habits, workouts, nutrition, and progress."
   />
 
-  <meta property="og:title" content="tommyy.fit v5.6 - Discipline. Performance. Transformation." />
+  <meta property="og:title" content="tommyy.fit v5.7 - Discipline. Performance. Transformation." />
   <meta
     property="og:description"
     content="Static fitness tracker with habits, workouts, nutrition, progress, and copy-ready AI exports for any chatbot."
@@ -32,7 +32,7 @@
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="./assets/icon.svg" />
 
-  <title>tommyy.fit v5.6 - Discipline. Performance. Transformation.</title>
+  <title>tommyy.fit v5.7 - Discipline. Performance. Transformation.</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -52,6 +52,11 @@
 <body>
   <a class="skip-link" href="#screen-root">Skip to content</a>
   <div id="app">
+    <!-- v5.7 Offline Banner -->
+    <div id="offline-banner" role="status" aria-live="polite" aria-label="Network status">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.56 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+      NO CONNECTION — WORKING OFFLINE
+    </div>
     <div id="loader" aria-label="Loading screen">
       <div
         class="loader-bg"
@@ -67,7 +72,7 @@
           <div class="loader-bar-fill"></div>
         </div>
         <div class="loader-version">
-          v5.6 by
+          v5.7 by
           <a href="https://beacons.ai/tommyy.fit" target="_blank" rel="noopener noreferrer">
             tommyy.fit
           </a>
@@ -88,7 +93,9 @@
         </a>
 
         <div id="topbar-meta"></div>
-        <div id="topbar-actions"></div>
+        <div id="topbar-actions">
+          <!-- v5.7 Notification bell injected here by app.js -->
+        </div>
       </div>
     </header>
 
@@ -151,7 +158,7 @@
       </button>
 
       <div class="sidebar-footer">
-        v5.6 &middot;
+        v5.7 &middot;
         <a href="https://beacons.ai/tommyy.fit" target="_blank" rel="noopener noreferrer">tommyy.fit</a>
       </div>
     </nav>
@@ -221,6 +228,7 @@
   <script src="js/screens/coach.js"></script>
   <script src="js/screens/profile.js"></script>
   <script src="js/screens/more.js"></script>
+  <script src="js/notifications.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

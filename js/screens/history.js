@@ -240,6 +240,86 @@ TF.Screens.history = function(root) {
     '</div>';
   }
 
+  /* ── v5.7 Weekly Volume Bar Chart ── */
+  function weeklyVolumeChart() {
+    var allLogs = TF.Store.getAllWorkoutLogs();
+    var today = new Date();
+
+    /* Build 8 weeks of data */
+    var weeks = [];
+    for (var w = 7; w >= 0; w--) {
+      var weekStart = new Date(today);
+      weekStart.setDate(today.getDate() - today.getDay() - w * 7);
+      var weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+
+      var volume = 0;
+      var dates  = [];
+      for (var d = 0; d < 7; d++) {
+        var day = new Date(weekStart);
+        day.setDate(weekStart.getDate() + d);
+        var key = day.getFullYear() + '-' +
+          String(day.getMonth() + 1).padStart(2, '0') + '-' +
+          String(day.getDate()).padStart(2, '0');
+        dates.push(key);
+        var log = allLogs[key];
+        if (log && log.exercises) {
+          Object.values(log.exercises).forEach(function (sets) {
+            (sets || []).forEach(function (set) {
+              if (set.done && set.type !== 'warmup' && set.weight && set.reps) {
+                volume += (parseFloat(set.weight) || 0) * (parseInt(set.reps, 10) || 0);
+              }
+            });
+          });
+        }
+      }
+
+      var mon  = new Date(weekStart);
+      mon.setDate(weekStart.getDate() + (mon.getDay() === 0 ? 1 : 8 - mon.getDay()));
+      var label = String(mon.getDate()) + '/' + String(mon.getMonth() + 1);
+      weeks.push({ label: label, volume: Math.round(volume), dates: dates });
+    }
+
+    var hasData = weeks.some(function (w) { return w.volume > 0; });
+    if (!hasData) {
+      return '<div class="vol-chart-empty">No workout volume logged yet. Complete sets with weight and reps to see your weekly chart.</div>';
+    }
+
+    var maxVol  = Math.max.apply(null, weeks.map(function (w) { return w.volume; }));
+    var peakIdx = weeks.reduce(function (best, w, i) { return w.volume > weeks[best].volume ? i : best; }, 0);
+
+    /* SVG bar chart */
+    var svgW = 320, svgH = 120, padL = 8, padR = 8, padT = 24, padB = 28;
+    var chartW = svgW - padL - padR;
+    var chartH = svgH - padT - padB;
+    var barW   = Math.floor(chartW / weeks.length) - 4;
+    var barGap  = 4;
+
+    var bars = weeks.map(function (week, i) {
+      var barH   = maxVol > 0 ? Math.round((week.volume / maxVol) * chartH) : 0;
+      var x      = padL + i * (barW + barGap);
+      var y      = padT + chartH - barH;
+      var isPeak = i === peakIdx && week.volume > 0;
+      var clr    = isPeak ? 'var(--lime)' : 'var(--bg-5)';
+      var volLabel = week.volume > 0
+        ? (week.volume >= 1000 ? (week.volume / 1000).toFixed(1) + 'k' : String(week.volume))
+        : '';
+
+      return '<g class="vol-bar-group' + (isPeak ? ' vol-bar-peak' : '') + '" data-dates="' + week.dates.join(',') + '" data-week-idx="' + i + '">' +
+        '<rect class="vol-bar-rect" x="' + x + '" y="' + y + '" width="' + barW + '" height="' + (barH || 2) + '" rx="3" fill="' + clr + '"/>' +
+        (volLabel ? '<text class="vol-bar-val" x="' + (x + barW / 2) + '" y="' + (y - 4) + '" text-anchor="middle" fill="' + clr + '">' + volLabel + '</text>' : '') +
+        '<text class="vol-week-label" x="' + (x + barW / 2) + '" y="' + (padT + chartH + 14) + '" text-anchor="middle">' + week.label + '</text>' +
+      '</g>';
+    }).join('');
+
+    return '<div class="volume-chart-wrap">' +
+      '<svg class="vol-chart-svg" viewBox="0 0 ' + svgW + ' ' + svgH + '" width="100%" style="max-height:' + svgH + 'px">' +
+        bars +
+      '</svg>' +
+      '<div style="font-size:10px;color:var(--txt-3);text-align:right;margin-top:4px;letter-spacing:.4px">kg lifted per week — tap a bar to view that session</div>' +
+    '</div>';
+  }
+
   function render() {
     if (!selectedExercise) {
       selectedExercise = getExerciseNames()[0] || '';
@@ -254,6 +334,11 @@ TF.Screens.history = function(root) {
           '<div id="cal-body"></div>' +
           '<button class="topbar-btn" id="cal-next">' + TF.Icon('chevron-right', 15) + '</button>' +
         '</div>' +
+      '</div>' +
+
+      '<div class="section">' +
+        TF.UI.secHdr('Weekly Volume') +
+        '<div class="card card-sm" id="vol-chart-section">' + weeklyVolumeChart() + '</div>' +
       '</div>' +
 
       '<div class="section">' + TF.UI.secHdr('Selected Day') + selectedDaySummary() + '</div>' +
@@ -295,6 +380,29 @@ TF.Screens.history = function(root) {
         render();
       });
     }
+
+    /* v5.7 — Volume chart bar click: jump to that week's first session with data */
+    root.querySelectorAll('.vol-bar-group').forEach(function(bar) {
+      bar.addEventListener('click', function() {
+        var datesStr = bar.dataset.dates;
+        if (!datesStr) return;
+        var dates = datesStr.split(',');
+        var workoutDates = TF.Store.getWorkoutDates ? TF.Store.getWorkoutDates() : [];
+        var hit = dates.find(function(d) { return workoutDates.indexOf(d) >= 0; });
+        if (hit) {
+          selectedDate = hit;
+          /* Sync calendar to that month */
+          var parts = hit.split('-');
+          viewDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, 1);
+          render();
+          /* Scroll selected day into view */
+          setTimeout(function() {
+            var el = root.querySelector('.cal-day.selected');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 80);
+        }
+      });
+    });
   }
 
   render();

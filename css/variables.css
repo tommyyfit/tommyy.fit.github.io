@@ -47,6 +47,19 @@
   --nav-h:66px; --top-h:54px; --max-w:480px;
   --sidebar-w:220px;
   --transition:.18s ease; --transition-slow:.35s ease;
+  --theme-transition: 300ms ease;
+}
+/* ── v5.7 Smooth theme cross-fade ── */
+html.theme-switching *,
+html.theme-switching *::before,
+html.theme-switching *::after {
+  transition:
+    background-color var(--theme-transition),
+    border-color var(--theme-transition),
+    color var(--theme-transition),
+    box-shadow var(--theme-transition),
+    fill var(--theme-transition),
+    stroke var(--theme-transition) !important;
 }
 .chip-lime   {background:var(--lime-dim);  color:var(--lime);}
 .chip-blue   {background:var(--blue-dim);  color:var(--blue);}
