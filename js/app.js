@@ -1,5 +1,5 @@
 /* ================================================================
-   APP.JS v4 - boot sequence
+   APP.JS v5.6 - boot sequence
    ================================================================ */
 (function(){
   'use strict';
@@ -38,7 +38,63 @@
   TF.App = TF.App || {};
   TF.App.maybeShowBackupReminder = maybeShowBackupReminder;
 
+  function enhanceUIHelpers() {
+    if (!TF.UI) {
+      return;
+    }
+
+    TF.UI.xpRow = function(profile) {
+      var p = profile || TF.Store.getProfile();
+      var level = TF.Store.getLevel(p);
+      var prog = TF.Store.getXPProgress(p);
+      var toNext = TF.Store.getXPToNext(p);
+      var shields = TF.Store.getShields();
+
+      return '<div class="xp-row" id="more-level-card" style="cursor:pointer" role="button" tabindex="0" aria-label="Open level guide">' +
+        '<div class="xp-level-badge">' + level + '</div>' +
+        '<div class="xp-details">' +
+          '<div class="xp-top">' +
+            '<span class="xp-name">Lv.' + level + ' &middot; ' + TF.Store.getWarriorTitle(level) + '</span>' +
+            '<span class="xp-pts t-mono">' + p.xp + ' XP</span>' +
+          '</div>' +
+          TF.UI.bar(prog, 'var(--lime)') +
+          '<div class="t-hint mt-1">' +
+            toNext + ' XP to level ' + (level + 1) +
+            (shields > 0
+              ? ' &nbsp;&middot;&nbsp; <span style="color:var(--blue)">' + shields + ' shield' + (shields > 1 ? 's' : '') + '</span>'
+              : ''
+            ) +
+          '</div>' +
+        '</div>' +
+        '<div class="streak-box">' +
+          '<div class="streak-num">' + (p.streakDays || 0) + '</div>' +
+          '<div class="streak-label">streak</div>' +
+        '</div>' +
+      '</div>';
+    };
+
+    TF.UI.initToggle = function(root, groupId) {
+      root.querySelectorAll('#' + groupId + ' .toggle-chip').forEach(function(chip) {
+        chip.addEventListener('click', function() {
+          root.querySelectorAll('#' + groupId + ' .toggle-chip').forEach(function(c) {
+            c.classList.remove('on');
+            c.setAttribute('aria-pressed', 'false');
+          });
+          chip.classList.add('on');
+          chip.setAttribute('aria-pressed', 'true');
+        });
+      });
+    };
+
+    TF.UI.checkStorageAndWarn = function() {
+      if (TF.Store.isStorageNearLimit()) {
+        TF.UI.toast('Storage almost full. Export your data in Profile.', null, 5000);
+      }
+    };
+  }
+
   function boot(){
+    enhanceUIHelpers();
     var theme = TF.Store.getTheme() || 'dark';
     document.documentElement.setAttribute('data-theme', theme);
 
@@ -57,7 +113,9 @@
     TF.Router.define('nutrition', TF.Screens.nutrition);
     TF.Router.define('progress', TF.Screens.progress);
     TF.Router.define('history', TF.Screens.history);
+    TF.Router.define('custom-workouts', TF.Screens['custom-workouts']);
     TF.Router.define('measurements', TF.Screens.measurements);
+    TF.Router.define('body-metrics', TF.Screens['body-metrics']);
     TF.Router.define('weekly-review', TF.Screens['weekly-review']);
     TF.Router.define('achievements', TF.Screens.achievements);
     TF.Router.define('coach', TF.Screens.coach);
@@ -69,10 +127,10 @@
     // Populate topbar-actions for mobile only
     if (actions) {
       actions.innerHTML =
-        '<button class="topbar-btn" id="btn-theme-mobile" title="Toggle theme">' +
+        '<button class="topbar-btn" id="btn-theme-mobile" title="Toggle theme" aria-label="Toggle theme">' +
           (TF.Store.getTheme() === 'light' ? TF.Icon('moon', 15) : TF.Icon('sun', 15)) +
         '</button>' +
-        '<button class="topbar-btn" id="btn-profile-mobile" title="Profile">' + TF.Icon('user', 15) + '</button>';
+        '<button class="topbar-btn" id="btn-profile-mobile" title="Profile" aria-label="Open profile">' + TF.Icon('user', 15) + '</button>';
 
       document.getElementById('btn-profile-mobile').addEventListener('click', function(){
         if (TF.Store.requiresAccount()) {
@@ -83,10 +141,6 @@
       });
 
       document.getElementById('btn-theme-mobile').addEventListener('click', function(){
-        if (TF.Store.requiresAccount()) {
-          TF.UI.promptAccountRequired();
-          return;
-        }
         var current = TF.Store.getTheme();
         var next = current === 'dark' ? 'light' : 'dark';
         TF.Store.setTheme(next);
@@ -104,10 +158,10 @@
       var sidebarActions = document.createElement('div');
       sidebarActions.className = 'sidebar-topbar-actions';
       sidebarActions.innerHTML =
-        '<button class="topbar-btn" id="btn-theme-desktop" title="Toggle theme">' +
+        '<button class="topbar-btn" id="btn-theme-desktop" title="Toggle theme" aria-label="Toggle theme">' +
           (TF.Store.getTheme() === 'light' ? TF.Icon('moon', 15) : TF.Icon('sun', 15)) +
         '</button>' +
-        '<button class="topbar-btn" id="btn-profile-desktop" title="Profile">' + TF.Icon('user', 15) + '</button>';
+        '<button class="topbar-btn" id="btn-profile-desktop" title="Profile" aria-label="Open profile">' + TF.Icon('user', 15) + '</button>';
       
       // Insert before sidebar footer
       var footer = bottomNav.querySelector('.sidebar-footer');
@@ -126,10 +180,6 @@
       });
 
       document.getElementById('btn-theme-desktop').addEventListener('click', function(){
-        if (TF.Store.requiresAccount()) {
-          TF.UI.promptAccountRequired();
-          return;
-        }
         var current = TF.Store.getTheme();
         var next = current === 'dark' ? 'light' : 'dark';
         TF.Store.setTheme(next);
@@ -158,20 +208,22 @@
 
     var lastInput = TF.Store.getTodayInput();
     if (!lastInput) {
-      var now = new Date();
-      var target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 0, 0);
-      var ms = now < target ? target - now : 24 * 60 * 60 * 1000 - (now - target);
-      setTimeout(function(){
-        if (TF.Store.isAccountReady() && !TF.Store.getTodayInput()) {
-          TF.UI.toast('You have not checked in today. Open Check-in to unlock your score.', null, 5000);
-        }
-      }, Math.min(ms, 3 * 60 * 60 * 1000));
+      var profile = TF.Store.getProfile();
+      var createdAt = profile.createdAt ? new Date(profile.createdAt) : null;
+      var appAgeDays = createdAt ? Math.floor((Date.now() - createdAt.getTime()) / 86400000) : 0;
+      if (appAgeDays >= 3) {
+        var now = new Date();
+        var target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 0, 0);
+        var ms = now < target ? target - now : 24 * 60 * 60 * 1000 - (now - target);
+        setTimeout(function(){
+          if (TF.Store.isAccountReady() && !TF.Store.getTodayInput()) {
+            TF.UI.toast('You have not checked in today. Open Check-in to unlock your score.', null, 5000);
+          }
+        }, Math.min(ms, 3 * 60 * 60 * 1000));
+      }
     }
 
-    var loaderBg = document.getElementById('loader-bg');
-    if (loaderBg) {
-      loaderBg.style.backgroundImage = "url('" + TF.Config.Images.loader + "')";
-    }
+    // Note: loader background image is set inline in HTML - no need to update here
 
     document.addEventListener('visibilitychange', function(){
       if (document.visibilityState === 'visible' && TF.Store.isAccountReady()) {

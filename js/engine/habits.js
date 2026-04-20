@@ -1,5 +1,5 @@
 /* ================================================================
-   HABITS ENGINE v4 — tommyy.fit
+   HABITS ENGINE v5 — tommyy.fit
    Per-habit streaks, XP bonuses, weekly completion rates
    ================================================================ */
 TF.Habits = (function(){
@@ -16,7 +16,9 @@ TF.Habits = (function(){
 
   function getDoneCount(){
     var today = TF.Store.getTodayHabits();
-    return Object.values(today).filter(Boolean).length;
+    return TF.Config.DefaultHabits.filter(function(h){
+      return !!today[h.id];
+    }).length;
   }
 
   function getWeeklyRate(id){

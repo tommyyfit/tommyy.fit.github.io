@@ -1,5 +1,5 @@
 /* ================================================================
-   AI EXPORT SCREEN v4 - prompt builder for any LLM
+   AI EXPORT SCREEN v5.6 - prompt builder for any LLM
    No built-in model calls, just copy-ready context
    ================================================================ */
 TF.Screens.coach = function(root) {
@@ -23,7 +23,7 @@ TF.Screens.coach = function(root) {
     },
     nutrition: {
       label: 'Nutrition audit',
-      goal: 'Review calorie, protein, water, and goal alignment.',
+      goal: 'Review calorie, protein, macros, and goal alignment.',
       output: 'Return: 1. nutrition gaps, 2. protein/calorie targets, 3. one-day food strategy.'
     },
     habits: {
@@ -49,8 +49,9 @@ TF.Screens.coach = function(root) {
     }
     return Object.keys(log.exercises).map(function(name){
       var sets = log.exercises[name] || [];
-      var completedSets = sets.filter(function(set){ return set.done; }).length;
-      return name + ': ' + completedSets + ' completed sets';
+      var workingSets = sets.filter(function(set){ return set.type !== 'warmup'; });
+      var completedSets = workingSets.filter(function(set){ return set.done; }).length;
+      return name + ': ' + completedSets + '/' + workingSets.length + ' working sets completed';
     });
   }
 
@@ -75,6 +76,7 @@ TF.Screens.coach = function(root) {
     });
     var prs = TF.Store.getPRs();
     var missionStats = TF.Store.getMissionStats();
+    var latestBodyMetrics = TF.Store.getLatestBodyMetrics ? TF.Store.getLatestBodyMetrics() : null;
 
     return {
       exportedAt: new Date().toISOString(),
@@ -144,7 +146,8 @@ TF.Screens.coach = function(root) {
       weightLog: weightLog,
       measurements: measurements,
       recentWorkouts: recentWorkouts,
-      prs: prs
+      prs: prs,
+      bodyMetrics: latestBodyMetrics
     };
   }
 
@@ -170,11 +173,11 @@ TF.Screens.coach = function(root) {
 
   function render(){
     root.innerHTML = '<div class="screen">' +
-      '<div class="hero-img-card" id="ai-export-hero" style="margin-bottom:14px">' +
+      '<div class="hero-img-card hero-short" id="ai-export-hero">' +
         '<div class="skeleton" style="position:absolute;inset:0;border-radius:var(--r-lg)"></div>' +
         '<div class="hero-img-card-content">' +
-          '<div class="t-label" style="color:var(--lime);margin-bottom:5px">AI EXPORT</div>' +
-          '<div class="t-headline" style="font-size:24px">Prompt Builder</div>' +
+          '<div class="t-label">AI EXPORT</div>' +
+          '<div class="t-headline">Prompt Builder</div>' +
           '<div class="t-hint" style="margin-top:4px">Package your data, then paste it into ChatGPT, Gemini, Claude, or any other LLM.</div>' +
         '</div>' +
       '</div>' +

@@ -11,10 +11,10 @@
   <meta name="apple-mobile-web-app-title" content="tommyy.fit" />
   <meta
     name="description"
-    content="tommyy.fit v4 - static performance tracker for discipline, habits, workouts, nutrition, and progress."
+    content="tommyy.fit v5.6 - static performance tracker for discipline, habits, workouts, nutrition, and progress."
   />
 
-  <meta property="og:title" content="tommyy.fit v4 - Discipline. Performance. Transformation." />
+  <meta property="og:title" content="tommyy.fit v5.6 - Discipline. Performance. Transformation." />
   <meta
     property="og:description"
     content="Static fitness tracker with habits, workouts, nutrition, progress, and copy-ready AI exports for any chatbot."
@@ -32,7 +32,7 @@
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="./assets/icon.svg" />
 
-  <title>tommyy.fit v4 - Discipline. Performance. Transformation.</title>
+  <title>tommyy.fit v5.6 - Discipline. Performance. Transformation.</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -50,6 +50,7 @@
 </head>
 
 <body>
+  <a class="skip-link" href="#screen-root">Skip to content</a>
   <div id="app">
     <div id="loader" aria-label="Loading screen">
       <div
@@ -66,7 +67,7 @@
           <div class="loader-bar-fill"></div>
         </div>
         <div class="loader-version">
-          v4.0 by
+          v5.6 by
           <a href="https://beacons.ai/tommyy.fit" target="_blank" rel="noopener noreferrer">
             tommyy.fit
           </a>
@@ -91,7 +92,7 @@
       </div>
     </header>
 
-    <main id="screen-root" class="hidden" role="main"></main>
+    <main id="screen-root" class="hidden" role="main" tabindex="-1"></main>
 
     <nav id="bottom-nav" class="hidden" role="navigation" aria-label="Primary navigation">
       <div class="sidebar-brand">
@@ -150,7 +151,7 @@
       </button>
 
       <div class="sidebar-footer">
-        v4.0 &middot;
+        v5.6 &middot;
         <a href="https://beacons.ai/tommyy.fit" target="_blank" rel="noopener noreferrer">tommyy.fit</a>
       </div>
     </nav>
@@ -186,6 +187,7 @@
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 
   <script src="js/config.js"></script>
+  <script src="js/store/backup.js"></script>
   <script src="js/store.js"></script>
   <script src="js/router.js"></script>
   <script src="js/engine/score.js"></script>
@@ -195,6 +197,8 @@
   <script src="js/engine/achievements.js"></script>
   <script src="js/engine/overload.js"></script>
   <script src="js/engine/habits.js"></script>
+  <script src="js/engine/celebrations.js"></script>
+  <script src="js/engine/rewards.js"></script>
   <script src="js/components/icons.js"></script>
   <script src="js/components/ui.js"></script>
   <script src="js/components/charts.js"></script>
@@ -202,12 +206,16 @@
   <script src="js/screens/dashboard.js"></script>
   <script src="js/screens/checkin.js"></script>
   <script src="js/screens/missions.js"></script>
+  <script src="js/screens/workout.helpers.js"></script>
   <script src="js/screens/workout.js"></script>
   <script src="js/screens/habits.js"></script>
   <script src="js/screens/nutrition.js"></script>
   <script src="js/screens/progress.js"></script>
   <script src="js/screens/history.js"></script>
+  <script src="js/screens/custom-workouts.js"></script>
   <script src="js/screens/measurements.js"></script>
+  <script src="js/screens/body-metrics.helpers.js"></script>
+  <script src="js/screens/body-metrics.js"></script>
   <script src="js/screens/weekly-review.js"></script>
   <script src="js/screens/achievements.js"></script>
   <script src="js/screens/coach.js"></script>

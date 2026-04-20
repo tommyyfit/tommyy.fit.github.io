@@ -42,7 +42,7 @@ TF.Screens.profile = function(root) {
       '<div class="profile-badge">' +
         '<div class="profile-badge-bg" style="background-image:url(\'' + TF.Config.Images.workoutHero + '\')"></div>' +
         '<div class="profile-badge-content">' +
-          '<div style="font-size:38px;margin-bottom:10px">LV</div>' +
+          '<div style="font-size:48px;margin-bottom:10px">🛡️</div>' +
           '<div class="profile-warrior-title">' + title.toUpperCase() + '</div>' +
           '<div class="t-hint mt-1">Level ' + level + ' · ' + profile.xp + ' XP · ' + (profile.streakDays || 0) + '-day streak' + (shields > 0 ? ' · ' + shields + ' shield' + (shields > 1 ? 's' : '') : '') + '</div>' +
           '<div style="margin-top:12px">' + TF.UI.bar(TF.Store.getXPProgress(profile), 'var(--lime)') + '</div>' +
@@ -124,9 +124,9 @@ TF.Screens.profile = function(root) {
         '<div class="t-hint" style="margin-bottom:12px">Static mode only: reminders are shown when you open the app or come back to it. No service worker is used.</div>' +
         '<div class="field-group" style="margin-bottom:10px">' +
           '<div class="field-label">Reminder cadence</div>' +
-          '<div class="toggle-row" id="tgl-reminder">' +
+          '<div class="toggle-row" id="tgl-reminder" style="flex-wrap:wrap">' +
             TF.Config.BackupReminderOptions.map(function(days){
-              return '<div class="toggle-chip ' + (settings.backupReminderDays === days ? 'on' : '') + '" data-val="' + days + '">Every ' + days + ' days</div>';
+              return '<div class="toggle-chip ' + (settings.backupReminderDays === days ? 'on' : '') + '" data-val="' + days + '">' + days + 'd</div>';
             }).join('') +
           '</div>' +
         '</div>' +
@@ -204,6 +204,7 @@ TF.Screens.profile = function(root) {
         name: name,
         goal: (root.querySelector('#tgl-goal .toggle-chip.on') || { dataset: {} }).dataset.val || profile.goal,
         equipment: (root.querySelector('#tgl-equip .toggle-chip.on') || { dataset: {} }).dataset.val || profile.equipment,
+        experience: profile.experience,
         targetCalories: calories,
         targetProtein: protein,
         bodyWeightKg: bodyWeight,

@@ -45,10 +45,9 @@ TF.Score=(function(){
     else if(inp.sleepQuality<=5)list.push({level:'warning',icon:'🌙',title:'Poor sleep',body:'No caffeine after 13:00. Room at 18°C. Phone charging outside the room tonight.'});
     if(inp.stress>=8)list.push({level:'danger',icon:'🔥',title:'Stress spike — '+inp.stress+'/10',body:'Box breathing now: 4s in → 4s hold → 4s out → 4s hold. 5 rounds. Vagal brake activated.'});
     else if(inp.stress>=6)list.push({level:'warning',icon:'🔥',title:'Elevated stress',body:'Stress at '+inp.stress+'/10. Single priority today. Limit decisions. Protect energy.'});
-    if(inp.energy<=3)list.push({level:'danger',icon:'⚡',title:'Energy critically low',body:'Check hydration and food first. If both are fine — honour the signal. Your body needs rest.'});
+    if(inp.energy<=3)list.push({level:'danger',icon:'⚡',title:'Energy critically low',body:'Check food, sleep, and stress first. If those are fine — honour the signal. Your body needs rest.'});
     if(r<40)list.push({level:'warning',icon:'🧠',title:'Overreaching risk',body:'Recovery at '+r+'/100. Swap today\'s session for mobility. Underrecovery kills gains.'});
     if(nutrition&&nutrition.protein>0&&nutrition.protein<80)list.push({level:'warning',icon:'🥩',title:'Protein too low',body:nutrition.protein+'g logged. Minimum 1.6g/kg for muscle protein synthesis. Add a shake.'});
-    if(nutrition&&nutrition.water>0&&nutrition.water<1.5)list.push({level:'info',icon:'💧',title:'Hydration low',body:'Only '+nutrition.water.toFixed(1)+'L. Dehydration drops cognition 10–15%. Drink 500ml now.'});
     if(inp.disciplineYesterday)list.push({level:'success',icon:'🔱',title:'Consistency chain active',body:'You executed yesterday. The compound effect is building. Don\'t break the chain.'});
     if(!list.length)list.push({level:'success',icon:'⚔️',title:'All systems optimal',body:'Metrics are clean. Execute the plan without hesitation. Today is a green-light day.'});
     return list;

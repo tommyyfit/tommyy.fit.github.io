@@ -96,7 +96,7 @@ TF.UI = (function () {
           : ((lvl - 1) * perLevel) + ' - ' + ((lvl * perLevel) - 1) + ' XP';
 
         return '<div class="level-guide-row' + (isActive ? ' active' : '') + '">' +
-          '<div>' +
+          '<div' + (isActive ? ' id="level-guide-current"' : '') + '>' +
           '<div class="level-guide-name">Lv.' + lvl + (isLast ? '+' : '') + ' ' + TF.UI.escapeHTML(rank) + '</div>' +
           '<div class="level-guide-range">' + range + '</div>' +
           '</div>' +
@@ -204,6 +204,9 @@ TF.UI = (function () {
       if (confirmBtn) {
         confirmBtn.focus();
       }
+      if (opts && typeof opts.onOpen === 'function') {
+        opts.onOpen(root.querySelector('.modal-card'));
+      }
     });
   }
 
@@ -309,10 +312,20 @@ TF.UI = (function () {
 
   /* ── Simpler hero image (used in screens where we can set after render) ── */
   function setHeroImg(el, url) {
+    var existing;
     if (!el) return;
+    existing = el.querySelector('.hero-img-card-media');
+    if (existing) {
+      existing.remove();
+    }
     var img = new Image();
     img.onload = function () {
-      el.style.backgroundImage = "url('" + url + "')";
+      var media = document.createElement('img');
+      media.className = 'hero-img-card-media';
+      media.src = url;
+      media.alt = '';
+      media.loading = 'eager';
+      el.insertBefore(media, el.firstChild);
       var skel = el.querySelector('.skeleton');
       if (skel) skel.remove();
     };
@@ -328,7 +341,7 @@ TF.UI = (function () {
 
     var shields = TF.Store.getShields();
 
-    return '<div class="xp-row" id="more-level-card" style="cursor:pointer">' +
+    return '<div class="xp-row" id="more-level-card" style="cursor:pointer" role="button" tabindex="0" aria-label="Open level guide">' +
       '<div class="xp-level-badge">' + level + '</div>' +
       '<div class="xp-details">' +
         '<div class="xp-top">' +
@@ -388,15 +401,25 @@ TF.UI = (function () {
 
   /* ── Rest timer ── */
   var _timerInterval = null, _timerStart = null, _timerDuration = null;
-  function startRestTimer(seconds, onDone) {
+  function startRestTimer(seconds, exerciseName, onDone) {
     if (!seconds || seconds <= 0) return;
     _timerDuration = seconds; _timerStart = Date.now();
     var overlay = document.getElementById('rest-timer-overlay');
     var numEl = document.getElementById('rt-num');
     var barEl = document.getElementById('rt-bar');
     var labelEl = document.getElementById('rt-label');
+    var titleEl = document.getElementById('rt-label-title');
+    var skipBtn = document.getElementById('rt-skip');
     if (!overlay) return;
+    if (titleEl) titleEl.textContent = exerciseName ? 'REST — ' + exerciseName.toUpperCase() : 'REST TIMER';
     overlay.classList.remove('hidden');
+    overlay.setAttribute('aria-hidden', 'false');
+    if (skipBtn) {
+      skipBtn.onclick = function () {
+        stopRestTimer();
+        haptic(40);
+      };
+    }
     clearInterval(_timerInterval);
 
     // Beep at end via Web Audio
@@ -431,7 +454,10 @@ TF.UI = (function () {
   function stopRestTimer() {
     clearInterval(_timerInterval);
     var overlay = document.getElementById('rest-timer-overlay');
-    if (overlay) overlay.classList.add('hidden');
+    if (overlay) {
+      overlay.classList.add('hidden');
+      overlay.setAttribute('aria-hidden', 'true');
+    }
   }
 
   /* ── Achievement toast ── */

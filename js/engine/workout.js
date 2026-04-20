@@ -211,6 +211,13 @@ TF.Workout = (function() {
     recovery: 'Active Recovery'
   };
 
+  var VALID_GENERATED_SPLITS = ['push', 'pull', 'legs', 'bodyweight', 'recovery'];
+  var NEXT_SPLIT = {
+    push: 'pull',
+    pull: 'legs',
+    legs: 'push'
+  };
+
   var FOCUS_LABELS = {
     push: 'Push day focused on pressing strength, shoulders, and triceps.',
     pull: 'Pull day focused on back thickness, lats, and biceps.',
@@ -235,10 +242,168 @@ TF.Workout = (function() {
     recovery: TF.Config.Images.mindset
   };
 
+  var SWAP_GROUPS = {
+    horizontal_press: ['Bench Press', 'Incline Bench Press', 'Close-Grip Bench Press', 'Machine Chest Press', 'DB Bench Press', 'Incline DB Press', 'DB Floor Press', 'Neutral-Grip DB Press', 'Deficit Push-ups', 'Push-ups', 'Decline Push-ups', 'Hand-Release Push-ups', 'Diamond Push-ups'],
+    vertical_press: ['Overhead Press', 'Seated DB Shoulder Press', 'Arnold Press', 'DB Shoulder Press', 'Half-Kneeling DB Press', 'Pike Push-ups'],
+    chest_isolation: ['Cable Fly', 'DB Fly'],
+    triceps: ['Tricep Pushdown', 'Skull Crushers', 'Overhead Rope Extension', 'DB Tricep Extension', 'DB Kickback', 'Overhead DB Extension', 'Weighted Dips', 'Chair Dips', 'Chair Tricep Dip'],
+    lateral_delts: ['Lateral Raises', 'Lean-Away Raise', 'DB Lateral Raise', 'Lean Lateral Raise'],
+    hinge: ['Deadlift', 'Rack Pull', 'Trap Bar Deadlift', 'Romanian Deadlift', 'Good Morning', 'DB Romanian Deadlift', 'Staggered-Stance RDL', 'Single-Leg RDL'],
+    vertical_pull: ['Weighted Pull-ups', 'Lat Pulldown', 'Neutral-Grip Pulldown', 'Pull-ups or Rows', 'Chin-ups or Inverted Rows'],
+    row: ['Barbell Row', 'Chest-Supported Row', 'One-Arm Cable Row', 'One-Arm DB Row', 'Chest-Supported DB Row', 'Bent-Over DB Row', 'Renegade Row', 'Towel Row', 'Superman Row'],
+    rear_delts: ['Face Pulls', 'Rear Delt Fly', 'Cable Face Pull', 'DB Rear Delt Fly', 'Reverse Fly'],
+    biceps: ['Hammer Curl', 'EZ-Bar Curl', 'Incline DB Curl', 'DB Curl', 'Zottman Curl'],
+    squat: ['Back Squat', 'Front Squat', 'Hack Squat', 'Goblet Squat', 'Front Rack DB Squat', 'Tempo Goblet Squat'],
+    single_leg: ['Leg Press', 'Walking Lunge', 'Bulgarian Split Squat', 'DB Split Squat', 'Reverse Lunge', 'DB Step-Up'],
+    glutes: ['Barbell Hip Thrust', 'DB Hip Thrust', 'Glute Bridge', 'Single-Leg Hip Bridge', 'Glute Bridge March'],
+    hamstrings: ['Leg Curl', 'Lying Leg Curl'],
+    quads: ['Leg Extension'],
+    calves: ['Calf Raises', 'Seated Calf Raise', 'Standing Calf Raise', 'Single-Leg Calf Raise'],
+    core: ['Plank', 'Hollow Hold', 'Side Plank', 'Mountain Climbers'],
+    mobility: ['Hip Flexor Stretch', 'Cat-Cow', 'Worlds Greatest Stretch', 'Thoracic Rotation', 'Box Breathing', 'Couch Stretch', 'Child Pose to Cobra', '90/90 Switch', 'Wall Slide', 'Nasal Breathing Walk']
+  };
+
+  var EXERCISE_GROUP = {};
+  Object.keys(SWAP_GROUPS).forEach(function(group){
+    SWAP_GROUPS[group].forEach(function(name){
+      EXERCISE_GROUP[name] = group;
+    });
+  });
+
+  var _exerciseLibraryCache = null;
+  var EXTRA_LIBRARY = [
+    { name: 'Smith Machine Bench Press', sets: 4, reps: '6-8', restSeconds: 120, note: 'Touch low on the chest and drive up smoothly.', swapGroup: 'horizontal_press' },
+    { name: 'Paused Bench Press', sets: 4, reps: '4-6', restSeconds: 180, note: 'Pause for a full count on the chest before pressing.', swapGroup: 'horizontal_press' },
+    { name: 'Low Incline DB Press', sets: 3, reps: '8-10', restSeconds: 90, note: 'Keep the incline low to bias chest over shoulders.', swapGroup: 'horizontal_press' },
+    { name: 'Landmine Press', sets: 3, reps: '8-10', restSeconds: 75, note: 'Drive up and slightly forward with stacked ribs.', swapGroup: 'vertical_press' },
+    { name: 'Machine Shoulder Press', sets: 3, reps: '8-10', restSeconds: 90, note: 'Stay braced and press through the full path.', swapGroup: 'vertical_press' },
+    { name: 'Cable Lateral Raise', sets: 3, reps: '12-15', restSeconds: 45, note: 'Smooth arc and constant tension the whole time.', swapGroup: 'lateral_delts' },
+    { name: 'Pec Deck Fly', sets: 3, reps: '12-15', restSeconds: 60, note: 'Pause in the squeeze without shrugging up.', swapGroup: 'chest_isolation' },
+    { name: 'JM Press', sets: 3, reps: '8-10', restSeconds: 75, note: 'Control the descent and keep elbows tucked.', swapGroup: 'triceps' },
+    { name: 'Cable Overhead Extension', sets: 3, reps: '12-15', restSeconds: 60, note: 'Get a long stretch and full triceps lockout.', swapGroup: 'triceps' },
+    { name: 'Weighted Push-up', sets: 4, reps: '8-12', restSeconds: 90, note: 'Stay rigid through the torso and hit full depth.', swapGroup: 'horizontal_press' },
+    { name: 'T-Bar Row', sets: 4, reps: '6-8', restSeconds: 120, note: 'Row to the lower chest with no torso bounce.', swapGroup: 'row' },
+    { name: 'Seal Row', sets: 4, reps: '8-10', restSeconds: 90, note: 'Let the lats stretch and pull from a dead stop.', swapGroup: 'row' },
+    { name: 'Meadows Row', sets: 3, reps: '10-12', restSeconds: 90, note: 'Drive the elbow back and keep the torso braced.', swapGroup: 'row' },
+    { name: 'Cable Row', sets: 3, reps: '10-12', restSeconds: 75, note: 'Reach fully forward, then finish tight to the torso.', swapGroup: 'row' },
+    { name: 'Straight-Arm Pulldown', sets: 3, reps: '12-15', restSeconds: 60, note: 'Keep elbows soft and drive hands to hips.', swapGroup: 'vertical_pull' },
+    { name: 'Assisted Pull-up', sets: 4, reps: '8-10', restSeconds: 90, note: 'Use the assist only enough to keep clean reps.', swapGroup: 'vertical_pull' },
+    { name: 'Single-Arm Lat Pulldown', sets: 3, reps: '10-12', restSeconds: 75, note: 'Pull elbow to hip and stay square.', swapGroup: 'vertical_pull' },
+    { name: 'Preacher Curl', sets: 3, reps: '10-12', restSeconds: 60, note: 'Start from a full stretch without swinging.', swapGroup: 'biceps' },
+    { name: 'Cable Curl', sets: 3, reps: '12-15', restSeconds: 60, note: 'Keep elbows pinned and tension constant.', swapGroup: 'biceps' },
+    { name: 'Bayesian Curl', sets: 3, reps: '12-15', restSeconds: 60, note: 'Stay long in the stretch and curl through the pinky.', swapGroup: 'biceps' },
+    { name: 'Barbell Shrug', sets: 3, reps: '10-12', restSeconds: 60, note: 'Straight up and down with a pause at the top.', swapGroup: 'rear_delts' },
+    { name: 'Machine Row', sets: 3, reps: '8-10', restSeconds: 90, note: 'Brace hard into the pad and pull evenly.', swapGroup: 'row' },
+    { name: 'Safety Bar Squat', sets: 4, reps: '5-6', restSeconds: 180, note: 'Brace hard and keep the torso stacked.', swapGroup: 'squat' },
+    { name: 'Box Squat', sets: 4, reps: '4-6', restSeconds: 180, note: 'Sit back under control and explode up.', swapGroup: 'squat' },
+    { name: 'Zercher Squat', sets: 3, reps: '6-8', restSeconds: 120, note: 'Stay tall and lock the bar close to the torso.', swapGroup: 'squat' },
+    { name: 'Leg Press Calf Raise', sets: 4, reps: '12-15', restSeconds: 45, note: 'Full stretch at the bottom and hard lockout.', swapGroup: 'calves' },
+    { name: 'Pendulum Squat', sets: 4, reps: '8-10', restSeconds: 120, note: 'Drive knees forward and keep the brace tight.', swapGroup: 'squat' },
+    { name: 'Smith Machine Split Squat', sets: 3, reps: '10 ea', restSeconds: 75, note: 'Stay centered and lower straight down.', swapGroup: 'single_leg' },
+    { name: 'Step-Up', sets: 3, reps: '10 ea', restSeconds: 75, note: 'Drive through the full foot and control the way down.', swapGroup: 'single_leg' },
+    { name: 'Cable Pull-Through', sets: 3, reps: '12-15', restSeconds: 60, note: 'Hinge cleanly and squeeze the glutes hard.', swapGroup: 'glutes' },
+    { name: 'Glute Ham Raise', sets: 3, reps: '8-10', restSeconds: 90, note: 'Control the lower phase and finish with hips extended.', swapGroup: 'hamstrings' },
+    { name: 'Nordic Curl', sets: 3, reps: '5-8', restSeconds: 90, note: 'Fight the eccentric as long as possible.', swapGroup: 'hamstrings' },
+    { name: 'Sissy Squat', sets: 3, reps: '10-12', restSeconds: 60, note: 'Stay balanced and keep tension on the quads.', swapGroup: 'quads' },
+    { name: 'Ab Wheel Rollout', sets: 3, reps: '8-12', restSeconds: 45, note: 'Keep ribs tucked and control the return.', swapGroup: 'core' },
+    { name: 'Cable Crunch', sets: 3, reps: '12-15', restSeconds: 45, note: 'Round down hard and exhale fully.', swapGroup: 'core' },
+    { name: 'Hanging Leg Raise', sets: 3, reps: '10-15', restSeconds: 45, note: 'Lift from the abs, not from momentum.', swapGroup: 'core' },
+    { name: 'Pallof Press', sets: 3, reps: '12 ea', restSeconds: 30, note: 'Stay square and resist rotation the whole time.', swapGroup: 'core' },
+    { name: 'Farmer Carry', sets: 3, reps: '30 sec', restSeconds: 60, note: 'Walk tall and keep the shoulders packed down.', swapGroup: 'core' },
+    { name: 'Cable Kickback', sets: 3, reps: '15-20', restSeconds: 45, note: 'Finish long through the glute without arching.', swapGroup: 'glutes' },
+    { name: 'Reverse Hyper', sets: 3, reps: '12-15', restSeconds: 60, note: 'Swing only enough to keep smooth glute tension.', swapGroup: 'glutes' },
+    { name: 'Smith Machine RDL', sets: 3, reps: '8-10', restSeconds: 90, note: 'Keep the hinge tight and stretch the hamstrings.', swapGroup: 'hinge' },
+    { name: 'Cable Upright Row', sets: 3, reps: '10-12', restSeconds: 60, note: 'Stop before shoulder discomfort and lead with elbows.', swapGroup: 'lateral_delts' }
+  ];
+
+  function decorateExercise(ex) {
+    var item = Object.assign({}, ex);
+    item.restSeconds = Math.max(0, parseInt(item.restSeconds, 10) || 0);
+    item.rest = item.rest || formatRest(item.restSeconds);
+    item.swapGroup = item.swapGroup || EXERCISE_GROUP[item.name] || '';
+    return item;
+  }
+
   function cloneExercises(list) {
     return list.map(function(ex) {
-      return Object.assign({}, ex);
+      return decorateExercise(ex);
     });
+  }
+
+  function getExerciseLibrary() {
+    if (_exerciseLibraryCache) {
+      return _exerciseLibraryCache.slice();
+    }
+    var seen = {};
+    var list = [];
+    Object.keys(LIB).forEach(function(key){
+      (LIB[key] || []).forEach(function(variant){
+        (variant || []).forEach(function(exercise){
+          if (!seen[exercise.name]) {
+            seen[exercise.name] = true;
+            list.push(decorateExercise(exercise));
+          }
+        });
+      });
+    });
+    EXTRA_LIBRARY.forEach(function(exercise) {
+      if (!seen[exercise.name]) {
+        seen[exercise.name] = true;
+        list.push(decorateExercise(exercise));
+      }
+    });
+    list.sort(function(a, b){
+      return a.name.localeCompare(b.name);
+    });
+    _exerciseLibraryCache = list;
+    return list.slice();
+  }
+
+  function getExerciseDefinition(name) {
+    var match = getExerciseLibrary().find(function(exercise){
+      return exercise.name === name;
+    });
+    return match ? decorateExercise(match) : decorateExercise({
+      name: name || 'Exercise',
+      sets: 3,
+      reps: '8-10',
+      restSeconds: 90,
+      note: ''
+    });
+  }
+
+  function getSwapOptions(exercise, limit) {
+    var current = typeof exercise === 'string' ? getExerciseDefinition(exercise) : decorateExercise(exercise);
+    if (!current.swapGroup) {
+      return [];
+    }
+    return getExerciseLibrary().filter(function(option){
+      return option.swapGroup === current.swapGroup && option.name !== current.name;
+    }).slice(0, limit || 6);
+  }
+
+  function getSelectedCustomWorkout() {
+    if (!TF.Store.getWorkoutSelection || !TF.Store.getCustomWorkouts) {
+      return null;
+    }
+    var selection = TF.Store.getWorkoutSelection(TF.Store.todayKey());
+    if (!selection || selection.mode !== 'custom' || !selection.workoutId) {
+      return null;
+    }
+    return TF.Store.getCustomWorkouts().find(function(workout){
+      return workout.id === selection.workoutId;
+    }) || null;
+  }
+
+  function getSelectedGeneratedOverride() {
+    if (!TF.Store.getWorkoutSelection) {
+      return null;
+    }
+    var selection = TF.Store.getWorkoutSelection(TF.Store.todayKey());
+    if (!selection || selection.mode !== 'generated' || VALID_GENERATED_SPLITS.indexOf(selection.splitKey) === -1) {
+      return null;
+    }
+    return selection;
   }
 
   function hashString(value) {
@@ -390,6 +555,252 @@ TF.Workout = (function() {
     return FOCUS_LABELS[split] || FOCUS_LABELS.bodyweight;
   }
 
+  function parseKeyDate(key) {
+    var parts = String(key || '').split('-').map(function(part){
+      return parseInt(part, 10);
+    });
+    if (parts.length !== 3 || !isFinite(parts[0]) || !isFinite(parts[1]) || !isFinite(parts[2])) {
+      return null;
+    }
+    return Date.UTC(parts[0], parts[1] - 1, parts[2]);
+  }
+
+  function daysBetweenKeys(fromKey, toKey) {
+    var from = parseKeyDate(fromKey);
+    var to = parseKeyDate(toKey);
+    if (from == null || to == null) {
+      return 0;
+    }
+    return Math.max(0, Math.round((to - from) / 86400000));
+  }
+
+  function hasCompletedWorkout(day) {
+    if (!day) {
+      return false;
+    }
+    if (day.finishedAt) {
+      return true;
+    }
+    return Object.keys(day.exercises || {}).some(function(name){
+      return (day.exercises[name] || []).some(function(set){
+        return set && set.done && set.type !== 'warmup';
+      });
+    });
+  }
+
+  function inferSplitFromLog(day) {
+    var name = String(day && day.workoutName || '').toLowerCase();
+    if (VALID_GENERATED_SPLITS.indexOf(day && day.splitKey) !== -1) {
+      return day.splitKey;
+    }
+    if (name.indexOf('push') !== -1) {
+      return 'push';
+    }
+    if (name.indexOf('pull') !== -1) {
+      return 'pull';
+    }
+    if (name.indexOf('leg') !== -1) {
+      return 'legs';
+    }
+    if (name.indexOf('recovery') !== -1 || name.indexOf('rest') !== -1) {
+      return 'recovery';
+    }
+    if (name.indexOf('bodyweight') !== -1 || name.indexOf('full-body') !== -1 || name.indexOf('full body') !== -1) {
+      return 'bodyweight';
+    }
+    return null;
+  }
+
+  function getLastCompletedWorkout(todayKey) {
+    if (!TF.Store.getAllWorkoutLogs) {
+      return null;
+    }
+    var logs = TF.Store.getAllWorkoutLogs();
+    var keys = Object.keys(logs || {}).filter(function(key){
+      return key < todayKey;
+    }).sort().reverse();
+    for (var i = 0; i < keys.length; i += 1) {
+      if (hasCompletedWorkout(logs[keys[i]])) {
+        return {
+          date: keys[i],
+          day: logs[keys[i]],
+          splitKey: inferSplitFromLog(logs[keys[i]]),
+          daysAgo: daysBetweenKeys(keys[i], todayKey)
+        };
+      }
+    }
+    return null;
+  }
+
+  function splitTitle(splitKey) {
+    return TITLES[splitKey] || TITLES.bodyweight;
+  }
+
+  function getScheduledSplit(profile, recovery) {
+    var schedule = chooseSchedule(profile);
+    var scheduledSplit = schedule[new Date().getDay()];
+    if (!scheduledSplit) {
+      return recovery < 58 ? 'recovery' : 'bodyweight';
+    }
+    return scheduledSplit;
+  }
+
+  function splitWarning(splitKey, lastWorkout) {
+    if (!lastWorkout || !lastWorkout.splitKey || lastWorkout.daysAgo > 3) {
+      return null;
+    }
+    if (splitKey === lastWorkout.splitKey && NEXT_SPLIT[splitKey]) {
+      return splitTitle(splitKey) + ' again may be rough. You trained it ' + lastWorkout.daysAgo + ' day' + (lastWorkout.daysAgo === 1 ? '' : 's') + ' ago.';
+    }
+    return null;
+  }
+
+  function resolveGeneratedSplit(profile, recovery) {
+    var today = TF.Store.todayKey ? TF.Store.todayKey() : null;
+    var override = getSelectedGeneratedOverride();
+    var scheduledSplit;
+    var lastWorkout;
+    var nextSplit;
+
+    lastWorkout = today ? getLastCompletedWorkout(today) : null;
+
+    if (override) {
+      if (override.reason === 'comeback') {
+        return {
+          split: 'bodyweight',
+          title: 'Return Session',
+          focus: 'Comeback mode keeps the first session back controlled, full-body, and easy to finish.',
+          note: 'Comeback mode active. Volume is capped so you restart without trying to repay missed workouts.',
+          selectionMode: 'manual',
+          overrideReason: 'comeback',
+          availableMinutes: override.availableMinutes || 30,
+          lastWorkout: lastWorkout
+        };
+      }
+      if (override.reason === 'noGym') {
+        return {
+          split: 'bodyweight',
+          title: 'No-Gym Session',
+          focus: 'Bodyweight work for the days when equipment is not available.',
+          note: 'No gym today. The session was switched to bodyweight and tuned for minimal setup.',
+          selectionMode: 'manual',
+          overrideReason: 'noGym',
+          equipmentOverride: 'none',
+          lastWorkout: lastWorkout
+        };
+      }
+      if (override.reason === 'sore') {
+        return {
+          split: 'recovery',
+          title: 'Soreness Recovery',
+          focus: 'Mobility, breathing, and easy movement to reduce stiffness without adding fatigue.',
+          note: 'Soreness mode active. Today is recovery instead of forcing the calendar.',
+          selectionMode: 'manual',
+          overrideReason: 'sore',
+          availableMinutes: override.availableMinutes || 25,
+          lastWorkout: lastWorkout
+        };
+      }
+      return {
+        split: override.splitKey,
+        title: override.reason === 'short' ? 'Short ' + splitTitle(override.splitKey) : null,
+        focus: override.reason === 'short' ? 'Compressed session for a tight window. Prioritize crisp working sets and skip extra fluff.' : null,
+        note: override.reason === 'short'
+          ? 'Short-time mode active. The session is capped to fit a tight window.'
+          : 'Manual choice active for today. Use Smart auto if you want the algorithm back.',
+        selectionMode: 'manual',
+        overrideReason: override.reason || null,
+        availableMinutes: override.availableMinutes || null,
+        equipmentOverride: override.equipmentOverride || null,
+        lastWorkout: lastWorkout
+      };
+    }
+
+    if (recovery < 32) {
+      return {
+        split: 'recovery',
+        title: TITLES.recovery,
+        focus: FOCUS_LABELS.recovery,
+        note: 'Recovery score is very low, so today was moved to active recovery.',
+        selectionMode: 'smart',
+        lastWorkout: lastWorkout
+      };
+    }
+
+    scheduledSplit = getScheduledSplit(profile, recovery);
+
+    if (scheduledSplit === 'recovery' && recovery < 58) {
+      return {
+        split: 'recovery',
+        title: 'Rest Day',
+        focus: 'Scheduled rest with a short recovery flow.',
+        note: 'Scheduled rest plus lower recovery, so the app kept this light.',
+        selectionMode: 'smart',
+        scheduledSplit: scheduledSplit,
+        lastWorkout: lastWorkout
+      };
+    }
+
+    if (lastWorkout && lastWorkout.daysAgo >= 7 && scheduledSplit !== 'recovery') {
+      return {
+        split: 'bodyweight',
+        title: 'Return Session',
+        focus: 'First session back after time away. Full-body work gets momentum back without forcing the calendar.',
+        note: 'Eased you back in after ' + lastWorkout.daysAgo + ' days away from logged workouts.',
+        selectionMode: 'smart',
+        scheduledSplit: scheduledSplit,
+        lastWorkoutGapDays: lastWorkout.daysAgo,
+        lastWorkout: lastWorkout,
+        availableMinutes: 35
+      };
+    }
+
+    if (lastWorkout && lastWorkout.daysAgo <= 3 && lastWorkout.splitKey === scheduledSplit && NEXT_SPLIT[scheduledSplit]) {
+      nextSplit = NEXT_SPLIT[scheduledSplit];
+      return {
+        split: nextSplit,
+        note: 'Avoided repeating ' + TITLES[scheduledSplit].toLowerCase() + ' after your last logged workout.',
+        selectionMode: 'smart',
+        scheduledSplit: scheduledSplit,
+        adjustedFrom: scheduledSplit,
+        lastWorkout: lastWorkout
+      };
+    }
+
+    return {
+      split: scheduledSplit,
+      selectionMode: 'smart',
+      scheduledSplit: scheduledSplit,
+      lastWorkout: lastWorkout
+    };
+  }
+
+  function getTodayContext(profile, input) {
+    var recovery = input ? TF.Score.recovery(input) : 68;
+    var resolved;
+    var lastWorkout;
+    profile = profile || TF.Store.getProfile();
+    resolved = resolveGeneratedSplit(profile, recovery);
+    lastWorkout = resolved.lastWorkout || null;
+    return {
+      recovery: recovery,
+      scheduledSplit: resolved.scheduledSplit || getScheduledSplit(profile, recovery),
+      recommendedSplit: resolved.split || 'bodyweight',
+      selectedTitle: resolved.title || splitTitle(resolved.split),
+      note: resolved.note || 'Smart auto chose this from today\'s schedule, recovery, equipment, and recent training.',
+      selectionMode: resolved.selectionMode || 'smart',
+      overrideReason: resolved.overrideReason || null,
+      lastWorkout: lastWorkout,
+      warnings: {
+        push: splitWarning('push', lastWorkout),
+        pull: splitWarning('pull', lastWorkout),
+        legs: splitWarning('legs', lastWorkout),
+        bodyweight: null,
+        recovery: null
+      }
+    };
+  }
+
   function volumeNote(profile, recovery, exerciseCount) {
     if (recovery < 50) {
       return 'Volume auto-reduced to protect recovery today.';
@@ -403,61 +814,98 @@ TF.Workout = (function() {
     return null;
   }
 
-  function buildPlan(profile, title, focus, splitKey, exercises, recovery) {
+  function buildPlan(profile, title, focus, splitKey, exercises, recovery, meta) {
+    var details = meta || {};
+    var decoratedExercises = exercises.map(decorateExercise);
     return {
       title: title,
       focus: focus,
       splitKey: splitKey,
-      exercises: exercises,
-      estimatedMinutes: estimateMinutes(exercises, profile.availableMinutes || 45),
+      exercises: decoratedExercises,
+      estimatedMinutes: estimateMinutes(decoratedExercises, profile.availableMinutes || 45),
       intensity: intensityLabel(recovery),
       recoveryScore: recovery,
-      volumeNote: volumeNote(profile, recovery, exercises.length),
+      volumeNote: volumeNote(profile, recovery, decoratedExercises.length),
       motivational: MOTIVATIONAL[splitKey] || MOTIVATIONAL.bodyweight,
-      image: IMAGES[splitKey] || TF.Config.Images.workoutHero
+      image: IMAGES[splitKey] || TF.Config.Images.workoutHero,
+      sourceType: details.sourceType || 'generated',
+      workoutId: details.workoutId || null,
+      workoutName: details.workoutName || title,
+      scheduleNote: details.scheduleNote || null,
+      selectionMode: details.selectionMode || 'smart',
+      adjustedFrom: details.adjustedFrom || null,
+      lastWorkoutGapDays: details.lastWorkoutGapDays || null,
+      scheduledSplit: details.scheduledSplit || null,
+      overrideReason: details.overrideReason || null,
+      lastWorkout: details.lastWorkout || null
     };
   }
 
   function getToday(profile, input) {
     var recovery = input ? TF.Score.recovery(input) : 68;
-    var schedule;
     var split;
     var poolKey;
     var selected;
+    var resolved;
+    var effectiveProfile;
 
     profile = profile || TF.Store.getProfile();
 
-    if (recovery < 32) {
-      selected = tuneExercises(chooseVariant(profile, 'recovery', recovery), profile, recovery).slice(0, 4);
-      return buildPlan(profile, TITLES.recovery, FOCUS_LABELS.recovery, 'recovery', selected, recovery);
+    var customWorkout = getSelectedCustomWorkout();
+    if (customWorkout && customWorkout.exercises && customWorkout.exercises.length) {
+      return buildPlan(
+        profile,
+        customWorkout.name,
+        'Custom workout template built from your own exercise library choices.',
+        'custom',
+        customWorkout.exercises,
+        recovery,
+        {
+          sourceType: 'custom',
+          workoutId: customWorkout.id,
+          workoutName: customWorkout.name
+        }
+      );
     }
 
-    schedule = chooseSchedule(profile);
-    split = schedule[new Date().getDay()];
-
-    if (!split) {
-      if (recovery < 58) {
-        selected = chooseVariant(profile, 'recovery', recovery).slice(0, 3);
-        return buildPlan(profile, 'Rest Day', 'Scheduled rest with a short recovery flow.', 'recovery', selected, recovery);
-      }
-      split = 'bodyweight';
+    resolved = resolveGeneratedSplit(profile, recovery);
+    split = resolved.split || 'bodyweight';
+    effectiveProfile = Object.assign({}, profile);
+    if (resolved.availableMinutes) {
+      effectiveProfile.availableMinutes = Math.min(profile.availableMinutes || 45, resolved.availableMinutes);
+    }
+    if (resolved.equipmentOverride) {
+      effectiveProfile.equipment = resolved.equipmentOverride;
     }
 
-    poolKey = selectPoolKey(split, profile.equipment);
-    selected = tuneExercises(chooseVariant(profile, poolKey, recovery), profile, recovery);
+    poolKey = selectPoolKey(split, effectiveProfile.equipment);
+    selected = tuneExercises(chooseVariant(effectiveProfile, poolKey, recovery), effectiveProfile, recovery);
 
     return buildPlan(
-      profile,
-      TITLES[split] || TITLES.bodyweight,
-      focusLabel(split, poolKey, profile),
+      effectiveProfile,
+      resolved.title || TITLES[split] || TITLES.bodyweight,
+      resolved.focus || focusLabel(split, poolKey, effectiveProfile),
       split === 'bodyweight' ? 'bodyweight' : split,
       selected,
-      recovery
+      recovery,
+      {
+        scheduleNote: resolved.note || null,
+        selectionMode: resolved.selectionMode || 'smart',
+        adjustedFrom: resolved.adjustedFrom || null,
+        lastWorkoutGapDays: resolved.lastWorkoutGapDays || null,
+        scheduledSplit: resolved.scheduledSplit || null,
+        overrideReason: resolved.overrideReason || null,
+        lastWorkout: resolved.lastWorkout || null
+      }
     );
   }
 
   return {
     getToday: getToday,
-    LIB: LIB
+    LIB: LIB,
+    getExerciseLibrary: getExerciseLibrary,
+    getExerciseDefinition: getExerciseDefinition,
+    getSwapOptions: getSwapOptions,
+    getTodayContext: getTodayContext
   };
 })();

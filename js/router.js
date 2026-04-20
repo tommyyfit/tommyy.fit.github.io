@@ -22,18 +22,25 @@ TF.Router = (function(){
       route = 'onboarding';
       replace = true;
     }
-    if (FILE_MODE) { _render(route); return; }
+    if (FILE_MODE) { _render(route, !!replace || route === _current); return; }
     if (replace) { history.replaceState(null, '', '#' + route); _render(route); }
-    else window.location.hash = route;
+    else {
+      if (window.location.hash.slice(1) === route) {
+        // Same route - force re-render without hash change
+        _render(route, true);
+      } else {
+        window.location.hash = route;
+      }
+    }
   }
 
   function back(){ navigate(_history.length > 1 ? _history[_history.length - 2] : 'dashboard', true); }
 
-  function _render(route){
+  function _render(route, forceRerender){
     route = resolveRoute(route);
     var fn = _routes[route];
     if (!fn) { route = 'dashboard'; fn = _routes.dashboard; }
-    if (route === _current) return;
+    if (route === _current && !forceRerender) return;
     _current = route;
     _history.push(route);
     if (_history.length > 30) _history.shift();
@@ -60,8 +67,13 @@ TF.Router = (function(){
 
     document.querySelectorAll('.nav-btn').forEach(function(btn){
       var r = btn.dataset.route;
-      var active = r === route || (r === 'more' && ['nutrition', 'progress', 'profile', 'history', 'measurements', 'weekly-review', 'achievements', 'coach', 'more'].indexOf(route) >= 0);
+      var active = r === route || (r === 'more' && ['nutrition', 'progress', 'profile', 'history', 'measurements', 'body-metrics', 'weekly-review', 'achievements', 'coach', 'custom-workouts', 'more'].indexOf(route) >= 0);
       btn.classList.toggle('active', active);
+      if (active) {
+        btn.setAttribute('aria-current', 'page');
+      } else {
+        btn.removeAttribute('aria-current');
+      }
     });
 
     requestAnimationFrame(function(){ root.scrollTop = 0; });

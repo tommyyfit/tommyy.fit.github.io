@@ -2,7 +2,6 @@ TF.Screens.more = function(root) {
   var profile = TF.Store.getProfile();
   var level = TF.Store.getLevel(profile);
   var title = TF.Store.getWarriorTitle(level);
-  var maxNamedLevel = TF.Config.WarriorTitles.length - 1;
   var safeName = TF.UI.escapeHTML(profile.name);
   var safeBrandUrl = TF.UI.escapeAttr(TF.Config.brandUrl);
   var unlockedCount = Object.keys(TF.Store.getUnlockedAchievements()).length;
@@ -10,46 +9,15 @@ TF.Screens.more = function(root) {
   var habitsDone = TF.Habits.getDoneCount();
   var totalHabits = TF.Config.DefaultHabits.length;
 
-  function buildLevelGuide() {
-    var perLevel = TF.Config.XP.perLevel;
-    var titles = TF.Config.WarriorTitles.slice(1);
-    var summaryCopy = level >= maxNamedLevel
-      ? 'You are at the top visible rank track with ' + profile.xp + ' XP total.'
-      : profile.xp + ' XP total. ' + TF.Store.getXPToNext(profile) + ' XP to reach the next level.';
-
-    return '<div class="level-guide">' +
-      '<div class="level-guide-summary">' +
-        '<div class="level-guide-summary-label">Current Rank</div>' +
-        '<div class="level-guide-summary-title">Lv.' + level + ' ' + TF.UI.escapeHTML(title) + '</div>' +
-        '<div class="level-guide-summary-copy">' + TF.UI.escapeHTML(summaryCopy) + '</div>' +
-      '</div>' +
-      '<div class="level-guide-list">' +
-        titles.map(function(rank, idx) {
-          var lvl = idx + 1;
-          var isLast = lvl === titles.length;
-          var isActive = isLast ? level >= lvl : level === lvl;
-          var range = isLast
-            ? ((lvl - 1) * perLevel) + '+ XP'
-            : ((lvl - 1) * perLevel) + ' - ' + ((lvl * perLevel) - 1) + ' XP';
-
-          return '<div class="level-guide-row' + (isActive ? ' active' : '') + '">' +
-            '<div>' +
-              '<div class="level-guide-name">Lv.' + lvl + (isLast ? '+' : '') + ' ' + TF.UI.escapeHTML(rank) + '</div>' +
-              '<div class="level-guide-range">' + range + '</div>' +
-            '</div>' +
-            '<div class="level-guide-badge">' + (isActive ? 'Current' : '') + '</div>' +
-          '</div>';
-        }).join('') +
-      '</div>' +
-    '</div>';
-  }
 
   var tiles = [
     { route: 'habits', icon: 'target', title: 'Daily Habits', desc: habitsDone + '/' + totalHabits + ' done today. Build streaks and XP.', bg: 'var(--lime-dim)', col: 'var(--lime)', badge: habitsDone > 0 ? habitsDone : null },
-    { route: 'nutrition', icon: 'activity', title: 'Fuel & Nutrition', desc: 'Macro rings, food search, water, and meals.', bg: 'var(--teal-dim)', col: 'var(--teal)' },
+    { route: 'nutrition', icon: 'activity', title: 'Fuel & Nutrition', desc: 'Macro rings, food search, and meals.', bg: 'var(--teal-dim)', col: 'var(--teal)' },
     { route: 'progress', icon: 'bar-chart', title: 'Progress & Stats', desc: 'Charts, weight log, weekly radar, and trends.', bg: 'var(--blue-dim)', col: 'var(--blue)' },
     { route: 'history', icon: 'calendar', title: 'Workout History', desc: 'Calendar view of sessions and training volume.', bg: 'var(--purple-dim)', col: 'var(--purple)' },
+    { route: 'custom-workouts', icon: 'dumbbell', title: 'Custom Workouts', desc: 'Build and save your own sessions from the exercise library.', bg: 'var(--teal-dim)', col: 'var(--teal)' },
     { route: 'measurements', icon: 'ruler', title: 'Body Measurements', desc: 'Chest, waist, arms, hips, and body trends.', bg: 'var(--orange-dim)', col: 'var(--orange)' },
+    { route: 'body-metrics', icon: 'activity', title: 'Body Metrics', desc: 'Body fat %, muscle mass, BMI, visceral fat, water, BMR & more.', bg: 'var(--red-dim)', col: 'var(--red)' },
     { route: 'weekly-review', icon: 'trending-up', title: 'Weekly Review', desc: 'Compare this week to last week and spot patterns.', bg: 'var(--amber-dim)', col: 'var(--amber)' },
     { route: 'achievements', icon: 'trophy', title: 'Achievements', desc: unlockedCount + '/' + totalAchievements + ' unlocked.', bg: 'rgba(255,184,61,.12)', col: 'var(--amber)', badge: unlockedCount },
     { route: 'coach', icon: 'message-circle', title: 'AI Export', desc: 'Generate copy-ready prompts for any chatbot.', bg: 'var(--teal-dim)', col: 'var(--teal)' },
@@ -103,9 +71,15 @@ TF.Screens.more = function(root) {
       TF.UI.modal({
         icon: 'trophy',
         title: 'Level Guide',
-        html: buildLevelGuide(),
+        html: TF.UI.buildLevelGuide(),
         cancelText: 'Close',
         confirmText: 'Open Profile',
+        onOpen: function(card) {
+          var current = card && card.querySelector('#level-guide-current');
+          if (current) {
+            current.scrollIntoView({ block: 'center', behavior: 'auto' });
+          }
+        },
         onConfirm: function() {
           TF.Router.navigate('profile');
         }
