@@ -16,6 +16,66 @@ TF.Screens.profile = function(root) {
     });
   }
 
+  function formatPerfMs(value) {
+    return (value || 0).toFixed(1) + ' ms';
+  }
+
+  function openSelectiveImportModal(jsonStr) {
+    var preview;
+    var selected = {};
+    var visibleSections;
+
+    try {
+      preview = TF.Store.previewImport(jsonStr);
+    } catch (_error) {
+      TF.UI.toast('Import failed - invalid file.', 'error');
+      return;
+    }
+
+    visibleSections = preview.sections.filter(function(section){
+      return ['SCHEMA_META', 'RECORD_META', 'ACTION_QUEUE', 'SYNC_QUEUE', 'ONBOARDED_STATE'].indexOf(section.key) === -1;
+    });
+
+    visibleSections.forEach(function(section){
+      selected[section.key] = true;
+    });
+
+    TF.UI.modal({
+      icon: 'upload',
+      title: 'Selective Restore',
+      html: '<div class="selective-restore-modal">' +
+        '<div class="t-hint" style="margin-bottom:12px">Pick which sections from this backup you want to restore. Schema v' + preview.snapshot.schemaVersion + ' will be preserved.</div>' +
+        visibleSections.map(function(section){
+          var checked = selected[section.key] ? ' checked' : '';
+          return '<label class="restore-option">' +
+            '<input type="checkbox" data-restore-key="' + section.key + '"' + checked + '>' +
+            '<span>' + TF.UI.escapeHTML(section.label) + '</span>' +
+            '<span class="restore-count">' + section.count + '</span>' +
+          '</label>';
+        }).join('') +
+      '</div>',
+      cancelText: 'Cancel',
+      confirmText: 'Restore selected',
+      onOpen: function(card){
+        card.querySelectorAll('[data-restore-key]').forEach(function(input){
+          input.addEventListener('change', function(){
+            selected[input.dataset.restoreKey] = input.checked;
+          });
+        });
+      },
+      onConfirm: function(){
+        var sections = Object.keys(selected).filter(function(key){ return selected[key]; });
+        try {
+          TF.Store.importData(jsonStr, sections);
+          TF.UI.toast('Data restored. Reloading...', 'success');
+          setTimeout(function(){ location.reload(); }, 900);
+        } catch (_error) {
+          TF.UI.toast('Restore failed.', 'error');
+        }
+      }
+    });
+  }
+
   function calcTargets(bodyWeight, goal){
     bodyWeight = parseFloat(bodyWeight) || 75;
     return {
@@ -33,8 +93,17 @@ TF.Screens.profile = function(root) {
     var shields = TF.Store.getShields();
     var settings = TF.Store.getSettings();
     var reminder = TF.Store.getBackupReminderState();
+    var schemaInfo = TF.Store.getSchemaInfo ? TF.Store.getSchemaInfo() : { schemaVersion: 2 };
+    var syncStatus = TF.Store.getSyncStatus ? TF.Store.getSyncStatus() : null;
+    var session = TF.Auth && TF.Auth.getSession ? TF.Auth.getSession() : null;
+    var authEmail = session && session.user ? session.user.email : (localStorage.getItem('tf_user_email') || '');
+    var perf = TF.Router.getPerf ? TF.Router.getPerf() : {};
+    var perfRoutes = Object.keys(perf).sort(function(a, b){
+      return (perf[b].lastMs || 0) - (perf[a].lastMs || 0);
+    });
     var notificationSupported = 'Notification' in window;
     var notificationPermission = notificationSupported ? Notification.permission : 'unsupported';
+    var canShareBackup = !!(navigator.share && window.File && TF.Store.createBackupFileParts);
     var safeName = TF.UI.escapeAttr(profile.name);
     var safeBrandUrl = TF.UI.escapeAttr(TF.Config.brandUrl);
 
@@ -52,7 +121,8 @@ TF.Screens.profile = function(root) {
 
       '<div class="card" style="margin-bottom:12px">' +
         '<div class="t-label" style="margin-bottom:12px">Identity</div>' +
-        '<div class="field-group"><div class="field-label">Your name</div><input class="field" id="in-name" type="text" value="' + safeName + '" placeholder="Your name" maxlength="30"></div>' +
+        '<div class="field-group" style="margin-bottom:10px"><div class="field-label">Your name</div><input class="field" id="in-name" type="text" value="' + safeName + '" placeholder="Your name" maxlength="30"></div>' +
+        '<div class="t-hint">Cloud auth: ' + (session ? 'connected' : 'local only') + (authEmail ? ' · ' + TF.UI.escapeHTML(authEmail) : '') + '</div>' +
       '</div>' +
 
       '<div class="card" style="margin-bottom:12px">' +
@@ -111,17 +181,38 @@ TF.Screens.profile = function(root) {
       '<div class="card" style="margin-bottom:12px">' +
         '<div class="t-label" style="margin-bottom:10px">Data & Backup</div>' +
         '<div class="t-hint" style="margin-bottom:8px">Storage used: ' + kb + 'KB / ~5000KB. Data rotates after 90 days.</div>' +
-        '<div class="t-hint" style="margin-bottom:12px">Last JSON export: ' + formatStamp(settings.lastBackupExportAt) + '</div>' +
-        '<div style="display:flex;gap:8px">' +
+        '<div class="t-hint" style="margin-bottom:8px">Schema v' + schemaInfo.schemaVersion + ' backup. Last JSON export: ' + formatStamp(settings.lastBackupExportAt) + '</div>' +
+        '<div style="display:flex;gap:8px;margin-bottom:8px">' +
           '<button class="btn btn-secondary btn-sm" id="btn-export" style="flex:1">' + TF.Icon('download', 12) + ' Export JSON</button>' +
           '<button class="btn btn-ghost btn-sm" id="btn-import" style="flex:1">' + TF.Icon('upload', 12) + ' Import</button>' +
+        '</div>' +
+        '<div style="display:flex;gap:8px">' +
+          '<button class="btn btn-ghost btn-sm" id="btn-share-backup" style="flex:1" ' + (canShareBackup ? '' : 'disabled') + '>' + TF.Icon('external-link', 12) + ' Share backup</button>' +
+          '<button class="btn btn-ghost btn-sm" id="btn-restore-cloud" style="flex:1">' + TF.Icon('cloud', 12) + ' Restore cloud</button>' +
         '</div>' +
         '<input type="file" id="import-file" accept=".json" style="display:none">' +
       '</div>' +
 
       '<div class="card" style="margin-bottom:12px">' +
+        '<div class="flex-between" style="margin-bottom:10px">' +
+          '<div>' +
+            '<div class="t-label">Sync & Install</div>' +
+            '<div class="t-hint">Cloud sync queue, migration, and PWA status.</div>' +
+          '</div>' +
+          '<div class="sync-chip' + (syncStatus && syncStatus.pending ? ' sync-chip-warn' : '') + '">' + ((syncStatus && syncStatus.pending) || 0) + ' pending</div>' +
+        '</div>' +
+        '<div class="t-hint" style="margin-bottom:6px">Status: ' + (syncStatus ? (syncStatus.statusLabel || (syncStatus.isOnline ? 'online' : 'offline')) : 'unknown') + '</div>' +
+        '<div class="t-hint" style="margin-bottom:12px">Last sync: ' + formatStamp(syncStatus && syncStatus.lastSyncAt) + '</div>' +
+        '<div style="display:flex;gap:8px">' +
+          '<button class="btn btn-secondary btn-sm" id="btn-sync-now" style="flex:1">' + TF.Icon('rotate-ccw', 12) + ' Sync now</button>' +
+          '<button class="btn btn-ghost btn-sm" id="btn-open-install" style="flex:1">' + TF.Icon('download', 12) + ' Install prompt</button>' +
+        '</div>' +
+        (session ? '<div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-ghost btn-sm" id="btn-logout" style="flex:1">' + TF.Icon('log-out', 12) + ' Logout</button></div>' : '') +
+      '</div>' +
+
+      '<div class="card" style="margin-bottom:12px">' +
         '<div class="t-label" style="margin-bottom:8px">Backup reminders</div>' +
-        '<div class="t-hint" style="margin-bottom:12px">Static mode only: reminders are shown when you open the app or come back to it. No service worker is used.</div>' +
+        '<div class="t-hint" style="margin-bottom:12px">Reminders still work with the new PWA shell. Offline mode keeps writes local and drains later.</div>' +
         '<div class="field-group" style="margin-bottom:10px">' +
           '<div class="field-label">Reminder cadence</div>' +
           '<div class="toggle-row" id="tgl-reminder" style="flex-wrap:wrap">' +
@@ -148,9 +239,22 @@ TF.Screens.profile = function(root) {
         '</div>' +
       '</div>' +
 
+      '<div class="card" style="margin-bottom:12px">' +
+        '<div class="t-label" style="margin-bottom:8px">Performance audit</div>' +
+        '<div class="t-hint" style="margin-bottom:12px">Latest measured screen render times from this session.</div>' +
+        (perfRoutes.length
+          ? perfRoutes.slice(0, 8).map(function(route){
+              return '<div class="perf-row">' +
+                '<div><div class="perf-route">' + TF.UI.escapeHTML(route) + '</div><div class="t-hint">avg ' + formatPerfMs(perf[route].totalMs / perf[route].count) + ' · max ' + formatPerfMs(perf[route].maxMs) + '</div></div>' +
+                '<div class="perf-last">' + formatPerfMs(perf[route].lastMs) + '</div>' +
+              '</div>';
+            }).join('')
+          : '<div class="t-hint">Open a few screens and the render profiler will populate here.</div>') +
+      '</div>' +
+
       '<div style="margin-top:4px;padding:14px;background:var(--bg-2);border-radius:var(--r-sm);border:1px solid var(--border);text-align:center">' +
         '<div style="font-family:var(--font-d);font-size:22px;font-weight:900;letter-spacing:3px;margin-bottom:4px">TOMMYY<span style="color:var(--lime)">.FIT</span></div>' +
-        '<div class="t-hint" style="margin-bottom:10px">' + TF.Config.version + ' · local browser storage · GitHub Pages friendly</div>' +
+        '<div class="t-hint" style="margin-bottom:10px">' + TF.Config.version + ' · cloud sync alpha · GitHub Pages friendly</div>' +
         '<a href="' + safeBrandUrl + '" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-ghost" style="display:inline-flex;gap:6px">' + TF.Icon('external-link', 12) + ' Visit tommyy.fit</a>' +
       '</div>' +
 
@@ -225,6 +329,43 @@ TF.Screens.profile = function(root) {
       draw();
     });
 
+    root.querySelector('#btn-share-backup').addEventListener('click', function(){
+      if (!canShareBackup) {
+        TF.UI.toast('Share sheet is not available in this browser.');
+        return;
+      }
+      var parts = TF.Store.createBackupFileParts();
+      var file = new File([parts.blob], parts.fileName, { type: 'application/json' });
+      navigator.share({
+        title: 'tommyy.fit backup',
+        text: 'Backup from ' + TF.Config.version,
+        files: [file]
+      }).then(function(){
+        TF.Store.markBackupExported();
+        TF.UI.toast('Share sheet opened.', 'success');
+        draw();
+      }).catch(function(error){
+        if (error && error.name !== 'AbortError') {
+          TF.UI.toast('Could not open share sheet.', 'error');
+        }
+      });
+    });
+
+    root.querySelector('#btn-restore-cloud').addEventListener('click', function(){
+      if (!TF.Sync || !TF.Sync.restoreIfLoggedIn) {
+        TF.UI.toast('Cloud restore is not available.');
+        return;
+      }
+      TF.Sync.restoreIfLoggedIn({ rerender: true }).then(function(result){
+        if (result && result.success !== false) {
+          TF.UI.toast(result.pulled ? ('Restored ' + result.pulled + ' cloud item' + (result.pulled > 1 ? 's' : '') + '.') : 'Cloud had no newer data to restore.', 'success');
+        } else {
+          TF.UI.toast(result && result.reason === 'not_logged_in' ? 'Login first to restore cloud data.' : ((result && result.error) || 'Cloud restore failed.'), 'error');
+        }
+        draw();
+      });
+    });
+
     root.querySelector('#btn-import').addEventListener('click', function(){
       root.querySelector('#import-file').click();
     });
@@ -234,15 +375,46 @@ TF.Screens.profile = function(root) {
       if (!file) return;
       var reader = new FileReader();
       reader.onload = function(loadEvent){
-        var ok = TF.Store.importData(loadEvent.target.result);
-        if (ok) {
-          TF.UI.toast('Data imported. Reloading...', 'success');
-          setTimeout(function(){ location.reload(); }, 1200);
-        } else {
-          TF.UI.toast('Import failed - invalid file.', 'error');
-        }
+        openSelectiveImportModal(loadEvent.target.result);
+        event.target.value = '';
       };
       reader.readAsText(file);
+    });
+
+    root.querySelector('#btn-sync-now').addEventListener('click', function(){
+      if (!TF.CloudSync || !TF.CloudSync.syncNow) {
+        TF.UI.toast('Sync layer is not available.');
+        return;
+      }
+      TF.CloudSync.syncNow().then(function(result){
+        if (result && result.success) {
+          TF.UI.toast('Sync complete. Pushed ' + result.pushed + ', pulled ' + result.pulled + '.', 'success');
+        } else {
+          TF.UI.toast(result && result.reason === 'not_logged_in' ? 'Login first to use cloud sync.' : ((result && (result.error || result.reason)) || 'Sync failed.'), 'error');
+        }
+        if (TF.PWA) {
+          TF.PWA.updateSyncSurface();
+        }
+        draw();
+      });
+    });
+
+    var logoutButton = root.querySelector('#btn-logout');
+    if (logoutButton) {
+      logoutButton.addEventListener('click', function(){
+        TF.Auth.logout();
+        TF.UI.toast('Logged out. Local data stayed on this device.', 'success');
+        draw();
+      });
+    }
+
+    root.querySelector('#btn-open-install').addEventListener('click', function(){
+      var floatingInstallButton = document.getElementById('install-app-btn');
+      if (floatingInstallButton) {
+        floatingInstallButton.click();
+      } else {
+        TF.UI.toast('Install prompt is not available yet.');
+      }
     });
 
     root.querySelector('#btn-notifs').addEventListener('click', function(){

@@ -1,5 +1,5 @@
 /* ================================================================
-   APP.JS v5.6 - boot sequence
+   APP.JS v6.0-alpha - boot sequence
    ================================================================ */
 (function(){
   'use strict';
@@ -93,10 +93,87 @@
     };
   }
 
+  function lazyScreen(routeName, scriptUrl, screenKey) {
+    return function(root) {
+      root.innerHTML = '<div class="screen"><div class="card" style="text-align:center;padding:28px 18px">' +
+        '<div class="t-title" style="margin-bottom:8px">Loading ' + TF.UI.escapeHTML(routeName) + '</div>' +
+        '<div class="t-hint">This screen is lazy-loaded to keep the startup path lighter.</div>' +
+      '</div></div>';
+
+      return TF.Assets.loadScript(scriptUrl).then(function(){
+        if (TF.Router.current() !== routeName) {
+          return;
+        }
+        if (!TF.Screens[screenKey]) {
+          throw new Error('Missing screen: ' + screenKey);
+        }
+        root.innerHTML = '';
+        TF.Screens[screenKey](root);
+      }).catch(function(error){
+        root.innerHTML = '<div class="screen"><div class="error-screen">' +
+          '<div class="error-icon" style="color:var(--amber)">' + TF.Icon('alert-triangle', 28) + '</div>' +
+          '<div class="t-title" style="margin-bottom:8px">Could not load this screen</div>' +
+          '<div class="t-hint">' + TF.UI.escapeHTML(error.message) + '</div>' +
+        '</div></div>';
+      });
+    };
+  }
+
+  function finishBoot(){
+    var initialRoute = TF.Store.requiresAccount() ? 'register' : (window.location.hash.slice(1) || 'dashboard');
+    TF.Router.init(initialRoute);
+
+    if (isFileProtocol()) {
+      TF.UI.toast('Opened from a local file. GitHub Pages or localhost is recommended.', null, 4200);
+    }
+
+    if (TF.Store.isAccountReady()) {
+      maybeShowBackupReminder(false);
+      if (TF.Notifications) {
+        setTimeout(function(){ TF.Notifications.generateAutoNotifications(); }, 1200);
+      }
+    }
+
+    var lastInput = TF.Store.getTodayInput();
+    if (!lastInput) {
+      var profile = TF.Store.getProfile();
+      var createdAt = profile.createdAt ? new Date(profile.createdAt) : null;
+      var appAgeDays = createdAt ? Math.floor((Date.now() - createdAt.getTime()) / 86400000) : 0;
+      if (appAgeDays >= 3) {
+        var now = new Date();
+        var target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 0, 0);
+        var ms = now < target ? target - now : 24 * 60 * 60 * 1000 - (now - target);
+        setTimeout(function(){
+          if (TF.Store.isAccountReady() && !TF.Store.getTodayInput()) {
+            TF.UI.toast('You have not checked in today. Open Check-in to unlock your score.', null, 5000);
+          }
+        }, Math.min(ms, 3 * 60 * 60 * 1000));
+      }
+    }
+
+    document.addEventListener('visibilitychange', function(){
+      if (document.visibilityState === 'visible' && TF.Store.isAccountReady()) {
+        maybeShowBackupReminder(false);
+        if (TF.Sync && navigator.onLine) {
+          TF.Sync.drainQueue();
+        }
+      }
+    });
+
+    if (TF.Sync && navigator.onLine) {
+      TF.Sync.drainQueue();
+    }
+
+    if (TF.PWA) {
+      TF.PWA.updateSyncSurface();
+    }
+
+    TF.Quotes.load();
+  }
+
   function boot(){
     enhanceUIHelpers();
 
-    /* ── v5.7 Auto-detect prefers-color-scheme on first load ── */
     var savedTheme = TF.Store.getTheme();
     if (!savedTheme) {
       var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -111,6 +188,8 @@
 
     TF.Store.rotateOldData();
 
+    TF.Router.define('login', TF.Screens.login);
+    TF.Router.define('register', TF.Screens.register);
     TF.Router.define('onboarding', TF.Screens.onboarding);
     TF.Router.define('dashboard', TF.Screens.dashboard);
     TF.Router.define('checkin', TF.Screens.checkin);
@@ -118,18 +197,20 @@
     TF.Router.define('workout', TF.Screens.workout);
     TF.Router.define('habits', TF.Screens.habits);
     TF.Router.define('nutrition', TF.Screens.nutrition);
-    TF.Router.define('progress', TF.Screens.progress);
-    TF.Router.define('history', TF.Screens.history);
+    TF.Router.define('progress', lazyScreen('progress', 'js/screens/progress.js', 'progress'));
+    TF.Router.define('history', lazyScreen('history', 'js/screens/history.js', 'history'));
     TF.Router.define('custom-workouts', TF.Screens['custom-workouts']);
     TF.Router.define('measurements', TF.Screens.measurements);
     TF.Router.define('body-metrics', TF.Screens['body-metrics']);
     TF.Router.define('weekly-review', TF.Screens['weekly-review']);
     TF.Router.define('achievements', TF.Screens.achievements);
     TF.Router.define('coach', TF.Screens.coach);
+    TF.Router.define('pr-history', TF.Screens['pr-history']);
+    TF.Router.define('habit-heatmap', TF.Screens['habit-heatmap']);
+    TF.Router.define('report-card', TF.Screens['report-card']);
     TF.Router.define('profile', TF.Screens.profile);
     TF.Router.define('more', TF.Screens.more);
 
-    /* ── v5.7 Smooth theme toggle helper ── */
     function applyThemeToggle(nextTheme, themeBtnMobile, themeBtnDesktop) {
       var html = document.documentElement;
       html.classList.add('theme-switching');
@@ -143,10 +224,8 @@
     }
 
     var actions = document.getElementById('topbar-actions');
-
     if (actions) {
       var currentTheme = TF.Store.getTheme() || 'dark';
-      /* v5.7 — include notification bell */
       actions.innerHTML =
         '<div class="notif-bell-wrap">' +
           '<button class="topbar-btn" id="btn-notif" title="Notifications" aria-label="Open notifications">' +
@@ -177,7 +256,6 @@
       });
     }
 
-    /* Sidebar (desktop) */
     var bottomNav = document.getElementById('bottom-nav');
     if (bottomNav) {
       var sidebarActions = document.createElement('div');
@@ -210,45 +288,16 @@
     document.getElementById('screen-root').classList.remove('hidden');
     document.getElementById('bottom-nav').classList.remove('hidden');
 
-    var initialRoute = TF.Store.requiresAccount() ? 'onboarding' : (window.location.hash.slice(1) || 'dashboard');
-    TF.Router.init(initialRoute);
-
-    if (isFileProtocol()) {
-      TF.UI.toast('Opened from a local file. GitHub Pages or localhost is recommended.', null, 4200);
-    }
-
-    if (TF.Store.isAccountReady()) {
-      maybeShowBackupReminder(false);
-      /* v5.7 — generate smart notifications after boot */
-      if (TF.Notifications) {
-        setTimeout(function(){ TF.Notifications.generateAutoNotifications(); }, 1200);
+    Promise.resolve().then(function(){
+      if (TF.Sync && TF.API && TF.API.isLoggedIn && TF.API.isLoggedIn()) {
+        return TF.Sync.restoreIfLoggedIn({ rerender: false });
       }
-    }
-
-    var lastInput = TF.Store.getTodayInput();
-    if (!lastInput) {
-      var profile = TF.Store.getProfile();
-      var createdAt = profile.createdAt ? new Date(profile.createdAt) : null;
-      var appAgeDays = createdAt ? Math.floor((Date.now() - createdAt.getTime()) / 86400000) : 0;
-      if (appAgeDays >= 3) {
-        var now = new Date();
-        var target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 0, 0);
-        var ms = now < target ? target - now : 24 * 60 * 60 * 1000 - (now - target);
-        setTimeout(function(){
-          if (TF.Store.isAccountReady() && !TF.Store.getTodayInput()) {
-            TF.UI.toast('You have not checked in today. Open Check-in to unlock your score.', null, 5000);
-          }
-        }, Math.min(ms, 3 * 60 * 60 * 1000));
-      }
-    }
-
-    document.addEventListener('visibilitychange', function(){
-      if (document.visibilityState === 'visible' && TF.Store.isAccountReady()) {
-        maybeShowBackupReminder(false);
-      }
+      return null;
+    }).catch(function(error){
+      console.warn('[App] Startup cloud restore failed.', error);
+    }).finally(function(){
+      finishBoot();
     });
-
-    TF.Quotes.load();
   }
 
   function runLoader(){
@@ -267,7 +316,6 @@
     }, 1700);
   }
 
-  /* ── v5.7 Offline Banner ── */
   function initOfflineBanner() {
     var banner = document.getElementById('offline-banner');
     if (!banner) return;
@@ -284,6 +332,9 @@
   }
 
   document.addEventListener('DOMContentLoaded', function () {
+    if (TF.PWA) {
+      TF.PWA.init();
+    }
     initOfflineBanner();
     runLoader();
   });

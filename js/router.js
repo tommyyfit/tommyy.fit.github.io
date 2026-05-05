@@ -3,11 +3,13 @@ TF.Router = (function(){
   'use strict';
   var _routes = {}, _current = null, _history = [];
   var FILE_MODE = window.location.protocol === 'file:';
+  var PUBLIC_ROUTES = { onboarding: true, login: true, register: true };
+  var perfStore = {};
 
   function define(name, fn){ _routes[name] = fn; }
 
   function shouldBlockRoute(route){
-    return route !== 'onboarding' && TF.Store && TF.Store.requiresAccount && TF.Store.requiresAccount();
+    return !PUBLIC_ROUTES[route] && TF.Store && TF.Store.requiresAccount && TF.Store.requiresAccount();
   }
 
   function resolveRoute(route){
@@ -37,6 +39,7 @@ TF.Router = (function(){
   function back(){ navigate(_history.length > 1 ? _history[_history.length - 2] : 'dashboard', true); }
 
   function _render(route, forceRerender){
+    var renderStartedAt = performance.now();
     route = resolveRoute(route);
     var fn = _routes[route];
     if (!fn) { route = 'dashboard'; fn = _routes.dashboard; }
@@ -54,7 +57,16 @@ TF.Router = (function(){
     root.innerHTML = '';
 
     try {
-      fn(root);
+      var result = fn(root);
+      if (result && typeof result.then === 'function') {
+        result.then(function(){
+          recordRender(route, performance.now() - renderStartedAt);
+        }).catch(function(error){
+          console.error('[Router] Async screen error on route "' + route + '":', error);
+        });
+      } else {
+        recordRender(route, performance.now() - renderStartedAt);
+      }
     } catch (e) {
       console.error('[Router] Screen error on route "' + route + '":', e);
       root.innerHTML = '<div class="screen"><div class="error-screen">' +
@@ -63,6 +75,7 @@ TF.Router = (function(){
         '<div class="t-hint" style="margin-bottom:20px">' + e.message + '</div>' +
         '<button class="btn btn-secondary" style="width:auto;padding:10px 22px" onclick="TF.Router.navigate(\'dashboard\',true)">Go Home</button>' +
         '</div></div>';
+      recordRender(route, performance.now() - renderStartedAt);
     }
 
     document.querySelectorAll('.nav-btn').forEach(function(btn){
@@ -77,6 +90,20 @@ TF.Router = (function(){
     });
 
     requestAnimationFrame(function(){ root.scrollTop = 0; });
+  }
+
+  function recordRender(route, durationMs){
+    var current = perfStore[route] || {
+      count: 0,
+      totalMs: 0,
+      maxMs: 0,
+      lastMs: 0
+    };
+    current.count += 1;
+    current.totalMs += durationMs;
+    current.maxMs = Math.max(current.maxMs, durationMs);
+    current.lastMs = durationMs;
+    perfStore[route] = current;
   }
 
   function init(initialRoute){
@@ -97,5 +124,14 @@ TF.Router = (function(){
 
   function current(){ return _current; }
 
-  return { define: define, navigate: navigate, back: back, init: init, current: current };
+  return {
+    define: define,
+    navigate: navigate,
+    back: back,
+    init: init,
+    current: current,
+    getPerf: function(){
+      return JSON.parse(JSON.stringify(perfStore));
+    }
+  };
 })();

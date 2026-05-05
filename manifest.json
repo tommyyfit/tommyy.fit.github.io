@@ -1,7 +1,7 @@
 {
-  "name": "tommyy.fit v5.6",
+  "name": "tommyy.fit v6.0-alpha",
   "short_name": "tommyy.fit",
-  "description": "Discipline. Performance. Transformation. - v5.6",
+  "description": "Discipline. Performance. Transformation. - v6.0-alpha cloud sync web app",
   "id": "./",
   "scope": "./",
   "start_url": "./",
@@ -16,5 +16,6 @@
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "version": "6.0-alpha"
 }

@@ -193,6 +193,108 @@ TF.Screens.history = function(root) {
     }).join('');
   }
 
+  /* ── v5.8 Strength Curve Graph ──────────────────────────────── */
+  function strengthCurveGraph() {
+    var names = getExerciseNames();
+    if (!names.length) {
+      return '<div class="card card-sm t-hint" style="text-align:center">Log workouts to see your strength curve.</div>';
+    }
+    var ex = selectedExercise || names[0];
+    var all = TF.Store.getAllWorkoutLogs ? TF.Store.getAllWorkoutLogs() : {};
+    var prs = TF.Store.getPRs ? TF.Store.getPRs() : {};
+    var prDate = prs[ex] ? prs[ex].date : null;
+
+    /* Collect max weight per session for this exercise */
+    var dataPoints = Object.keys(all).sort().map(function (dateKey) {
+      var log = all[dateKey];
+      if (!log || !log.exercises || !log.exercises[ex]) return null;
+      var sets = log.exercises[ex];
+      var maxWeight = 0;
+      sets.forEach(function (set) {
+        if (set.done && set.type !== 'warmup' && set.weight) {
+          var w = parseFloat(set.weight);
+          if (w > maxWeight) maxWeight = w;
+        }
+      });
+      return maxWeight > 0 ? { date: dateKey, weight: maxWeight } : null;
+    }).filter(Boolean).slice(-20); /* Last 20 sessions */
+
+    if (dataPoints.length < 2) {
+      return '<div class="card">' +
+        '<div class="field-group" style="margin-bottom:12px">' +
+          '<div class="field-label">Strength Curve</div>' +
+          '<select id="sc-exercise-picker" class="field">' +
+            names.map(function (n) { return '<option value="' + TF.UI.escapeAttr(n) + '"' + (n === ex ? ' selected' : '') + '>' + TF.UI.escapeHTML(n) + '</option>'; }).join('') +
+          '</select>' +
+        '</div>' +
+        '<div class="t-hint" style="text-align:center;padding:16px">Log at least 2 sessions to draw the curve.</div>' +
+      '</div>';
+    }
+
+    /* SVG chart */
+    var W = 320, H = 140, padL = 42, padR = 12, padT = 14, padB = 24;
+    var weights = dataPoints.map(function (d) { return d.weight; });
+    var minW = Math.min.apply(null, weights);
+    var maxW = Math.max.apply(null, weights);
+    var wRange = maxW - minW || 1;
+    var n = dataPoints.length;
+
+    function px(i) { return padL + (i / (n - 1)) * (W - padL - padR); }
+    function py(w) { return padT + (1 - (w - minW) / wRange) * (H - padT - padB); }
+
+    var linePts = dataPoints.map(function (d, i) { return px(i).toFixed(1) + ',' + py(d.weight).toFixed(1); }).join(' ');
+
+    /* Y-axis ticks */
+    var yTicks = [minW, (minW + maxW) / 2, maxW].map(function (v) {
+      var y = py(v);
+      return '<line x1="' + padL + '" y1="' + y.toFixed(1) + '" x2="' + (W - padR) + '" y2="' + y.toFixed(1) + '" stroke="var(--border)" stroke-width="0.5"/>' +
+        '<text x="' + (padL - 4) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="end" font-size="8" fill="var(--txt-3)">' + Math.round(v) + '</text>';
+    }).join('');
+
+    /* X-axis date labels */
+    var xLabels = [0, Math.floor(n / 2), n - 1].map(function (i) {
+      var d = new Date(dataPoints[i].date + 'T12:00:00');
+      var label = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+      return '<text x="' + px(i).toFixed(1) + '" y="' + (H - 4) + '" text-anchor="middle" font-size="7" fill="var(--txt-3)">' + label + '</text>';
+    }).join('');
+
+    /* Data points + PR star */
+    var dots = dataPoints.map(function (d, i) {
+      var cx = px(i), cy = py(d.weight);
+      var isPR = d.date === prDate;
+      if (isPR) {
+        /* Star polygon */
+        var s = 7;
+        var starPts = [0,1,2,3,4].map(function (k) {
+          var angle = (k * 4 * Math.PI / 5) - Math.PI / 2;
+          var r = k % 2 === 0 ? s : s * 0.4;
+          return (cx + r * Math.cos(angle)).toFixed(1) + ',' + (cy + r * Math.sin(angle)).toFixed(1);
+        }).join(' ');
+        return '<polygon points="' + starPts + '" fill="var(--amber)" stroke="var(--bg-1)" stroke-width="1"/>' +
+          '<title>' + d.date + ' · ' + d.weight + ' kg ⭐ PR</title>';
+      }
+      return '<circle cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" r="3" fill="var(--lime)" stroke="var(--bg-1)" stroke-width="1.2"/>' +
+        '<title>' + d.date + ' · ' + d.weight + ' kg</title>';
+    }).join('');
+
+    var svg = '<svg width="100%" viewBox="0 0 ' + W + ' ' + H + '" style="overflow:visible">' +
+      yTicks + xLabels +
+      '<polyline fill="none" stroke="var(--lime)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="' + linePts + '"/>' +
+      dots +
+    '</svg>';
+
+    return '<div class="card">' +
+      '<div class="field-group" style="margin-bottom:12px">' +
+        '<div class="field-label">Strength Curve — max weight per session</div>' +
+        '<select id="sc-exercise-picker" class="field">' +
+          names.map(function (n) { return '<option value="' + TF.UI.escapeAttr(n) + '"' + (n === ex ? ' selected' : '') + '>' + TF.UI.escapeHTML(n) + '</option>'; }).join('') +
+        '</select>' +
+      '</div>' +
+      '<div style="overflow-x:auto">' + svg + '</div>' +
+      (prDate ? '<div class="t-hint" style="margin-top:8px">⭐ Star = PR set on ' + prDate + ' · ' + (prs[ex] ? prs[ex].weight + ' kg × ' + prs[ex].reps : '') + '</div>' : '') +
+    '</div>';
+  }
+
   function exerciseLogbook() {
     if (!selectedExercise) {
       return '<div class="card card-sm t-hint" style="text-align:center">Log a few sessions and your movement trend logbook will show up here.</div>';
@@ -342,6 +444,7 @@ TF.Screens.history = function(root) {
       '</div>' +
 
       '<div class="section">' + TF.UI.secHdr('Selected Day') + selectedDaySummary() + '</div>' +
+      '<div class="section">' + TF.UI.secHdr('Strength Curve') + strengthCurveGraph() + '</div>' +
       '<div class="section">' + TF.UI.secHdr('Exercise Logbook') + exerciseLogbook() + '</div>' +
       '<div class="section">' + TF.UI.secHdr('Recent Sessions') + recentSessions() + '</div>' +
       '<div style="height:8px"></div>' +
@@ -377,6 +480,15 @@ TF.Screens.history = function(root) {
     if (picker) {
       picker.addEventListener('change', function() {
         selectedExercise = picker.value;
+        render();
+      });
+    }
+
+    /* v5.8 — Strength Curve exercise picker */
+    var scPicker = root.querySelector('#sc-exercise-picker');
+    if (scPicker) {
+      scPicker.addEventListener('change', function() {
+        selectedExercise = scPicker.value;
         render();
       });
     }

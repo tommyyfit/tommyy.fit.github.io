@@ -74,6 +74,66 @@ TF.Notifications = (function () {
       }
     }
 
+    /* v5.8 — Smart Goal Nudges: Calories / Protein off-track */
+    var todayNutrition = TF.Store.getTodayNutrition ? TF.Store.getTodayNutrition() : {};
+    var profile = TF.Store.getProfile ? TF.Store.getProfile() : {};
+    if (hour >= 15 && todayNutrition) {
+      var loggedCal = todayNutrition.calories || 0;
+      var loggedPro = todayNutrition.protein || 0;
+      var targetCal = profile.targetCalories || 0;
+      var targetPro = profile.targetProtein || 0;
+
+      if (targetCal > 0 && loggedCal > 0) {
+        var calPct = loggedCal / targetCal;
+        if (calPct < 0.6) {
+          add({
+            id: 'cal_low_' + today,
+            type: 'warning',
+            title: 'Calories well below target',
+            body: 'Logged: ' + loggedCal + ' kcal vs target ' + targetCal + ' kcal. Under-eating slows recovery and muscle growth.'
+          });
+        } else if (calPct > 1.3) {
+          add({
+            id: 'cal_high_' + today,
+            type: 'info',
+            title: 'Calories above target today',
+            body: 'Logged: ' + loggedCal + ' kcal vs target ' + targetCal + ' kcal. Check if this fits your weekly average.'
+          });
+        }
+      }
+
+      if (targetPro > 0 && loggedPro > 0 && loggedPro < targetPro * 0.7) {
+        /* Find highest-leverage habit for protein */
+        add({
+          id: 'protein_low_' + today,
+          type: 'warning',
+          title: 'Protein behind target',
+          body: 'Only ' + loggedPro + 'g logged vs ' + targetPro + 'g target. Add a protein shake or lean meal before end of day.'
+        });
+      }
+    }
+
+    /* v5.8 — Highest-leverage habit nudge (if habit streak at risk, suggest best correlated habit) */
+    if (TF.Trends && hour >= 12) {
+      var declining = TF.Trends.getDecliningMetrics();
+      if (declining.length > 0) {
+        var worst = declining[0];
+        var suggestion = worst.metric === 'sleep' || worst.metric === 'sleepHrs'
+          ? '🌙 Early bed (22:00) + No screens 1h before'
+          : worst.metric === 'energy'
+          ? '☀️ Morning walk / sunlight + Cold shower'
+          : worst.metric === 'focus'
+          ? '🧘 Meditation / breathwork + Gratitude journal'
+          : '🔄 Review your recovery habits';
+        add({
+          id: 'trend_nudge_' + today + '_' + worst.metric,
+          type: 'info',
+          title: worst.label + ' declining — highest leverage fix',
+          body: suggestion
+        });
+      }
+    }
+
     /* PR alerts from today's workout */
     var wLog = TF.Store.getTodayWorkoutLog ? TF.Store.getTodayWorkoutLog() : null;
     if (wLog && wLog.exercises) {

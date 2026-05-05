@@ -20,6 +20,9 @@ TF.Screens.more = function(root) {
     { route: 'body-metrics', icon: 'activity', title: 'Body Metrics', desc: 'Body fat %, muscle mass, BMI, visceral fat, water, BMR & more.', bg: 'var(--red-dim)', col: 'var(--red)' },
     { route: 'weekly-review', icon: 'trending-up', title: 'Weekly Review', desc: 'Compare this week to last week and spot patterns.', bg: 'var(--amber-dim)', col: 'var(--amber)' },
     { route: 'achievements', icon: 'trophy', title: 'Achievements', desc: unlockedCount + '/' + totalAchievements + ' unlocked.', bg: 'rgba(255,184,61,.12)', col: 'var(--amber)', badge: unlockedCount },
+    { route: 'pr-history', icon: 'trophy', title: 'PR History', desc: 'All personal records by exercise, filterable by Push / Pull / Legs.', bg: 'var(--amber-dim)', col: 'var(--amber)' },
+    { route: 'habit-heatmap', icon: 'grid', title: 'Habit Heatmap', desc: '30-day correlation grid — see your highest-leverage habits.', bg: 'var(--lime-dim)', col: 'var(--lime)' },
+    { route: 'report-card', icon: 'bar-chart', title: 'Monthly Report Card', desc: 'Auto-generated monthly grade with PNG export and share.', bg: 'var(--blue-dim)', col: 'var(--blue)' },
     { route: 'coach', icon: 'message-circle', title: 'AI Export', desc: 'Generate copy-ready prompts for any chatbot.', bg: 'var(--teal-dim)', col: 'var(--teal)' },
     { route: 'profile', icon: 'settings', title: 'Profile & Settings', desc: 'Goals, targets, reminders, theme, and backups.', bg: 'var(--bg-3)', col: 'var(--txt-2)' }
   ];
@@ -55,7 +58,7 @@ TF.Screens.more = function(root) {
       '<div style="font-family:var(--font-d);font-size:24px;font-weight:900;letter-spacing:3px;margin-bottom:4px">TOMMYY<span style="color:var(--lime)">.FIT</span></div>' +
       '<div class="t-hint" style="margin-bottom:12px">Discipline. Performance. Transformation.</div>' +
       '<a href="' + safeBrandUrl + '" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-lime-ghost" style="display:inline-flex;gap:6px;margin-bottom:10px">' + TF.Icon('external-link', 12) + ' beacons.ai/tommyy.fit</a>' +
-      '<div class="t-hint" style="font-size:10px;margin-top:6px">' + TF.Config.version + ' - Data stored locally - Static-host friendly</div>' +
+      '<div class="t-hint" style="font-size:10px;margin-top:6px">' + TF.Config.version + ' - Offline-first bridge - Static-host friendly</div>' +
     '</div>' +
     '<div style="height:8px"></div></div>';
 

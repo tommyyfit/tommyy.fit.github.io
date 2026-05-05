@@ -227,6 +227,119 @@ TF.Screens['body-metrics'] = function(root) {
       '<div class="card"><div class="t-label" style="margin-bottom:8px">All entries</div>' + tableRows + '</div>';
   }
 
+
+  /* ── v5.8 Body Scan CSV Import ──────────────────────────────── */
+  function showCSVImportModal() {
+    /* Column aliases: what DEXA/InBody might call each metric */
+    var ALIASES = {
+      bodyFatPct:   ['body fat %','body fat percentage','body fat','%bf','fat%','fat mass%'],
+      muscleMassKg: ['lean mass','skeletal muscle mass','muscle mass','lean body mass','lbm','smm'],
+      visceralFat:  ['visceral fat','visceral fat rating','vfr','visceral fat level'],
+      bmi:          ['bmi','body mass index'],
+      waterPct:     ['total body water','tbw%','water','water %'],
+      boneMassKg:   ['bone mass','bone mineral content','bmc']
+    };
+
+    var modalHTML =
+      '<div style="margin-bottom:12px">' +
+        '<div class="t-hint" style="margin-bottom:8px">Paste CSV rows from your DEXA or InBody scan. First row should be headers. Supports: muscle mass, body fat %, visceral fat, BMI, water %, bone mass.</div>' +
+        '<textarea id="bm-csv-input" class="field" rows="8" style="font-family:var(--font-m);font-size:11px;resize:vertical" placeholder="date,body fat %,lean mass,visceral fat rating&#10;2025-01-15,18.2,62.4,8"></textarea>' +
+      '</div>' +
+      '<div id="bm-csv-preview" style="display:none">' +
+        '<div class="t-label" style="margin-bottom:6px">Preview</div>' +
+        '<div id="bm-csv-preview-rows" style="font-size:12px;max-height:160px;overflow-y:auto"></div>' +
+      '</div>';
+
+    TF.UI.modal({
+      icon: 'upload',
+      title: 'Import Body Scan CSV',
+      html: modalHTML,
+      cancelText: 'Cancel',
+      confirmText: 'Import',
+      onOpen: function(card) {
+        var ta = card.querySelector('#bm-csv-input');
+        if (ta) {
+          ta.addEventListener('input', function() {
+            previewCSV(card, ALIASES, ta.value);
+          });
+        }
+      },
+      onConfirm: function() {
+        var ta = document.querySelector('#bm-csv-input');
+        if (!ta) return;
+        var rows = parseCSV(ta.value, ALIASES);
+        if (!rows.length) { TF.UI.toast('No valid rows found. Check headers.', 'error'); return; }
+        rows.forEach(function(row) {
+          if (TF.Store.addBodyMetricEntry) {
+            TF.Store.addBodyMetricEntry(row);
+          } else {
+            /* Fallback: read/patch/write raw array */
+            try {
+              var arr = JSON.parse(localStorage.getItem('tf_body_metrics') || '[]');
+              arr.unshift(row);
+              arr.sort(function(a,b){ return b.date > a.date ? 1 : -1; });
+              localStorage.setItem('tf_body_metrics', JSON.stringify(arr));
+            } catch(e) {}
+          }
+        });
+        TF.UI.toast(rows.length + ' scan' + (rows.length > 1 ? 's' : '') + ' imported successfully!', 'success');
+        draw();
+      }
+    });
+  }
+
+  function parseCSV(raw, ALIASES) {
+    var lines = raw.trim().split('\n').map(function(l){ return l.trim(); }).filter(Boolean);
+    if (lines.length < 2) return [];
+    var headers = lines[0].split(',').map(function(h){ return h.trim().toLowerCase().replace(/["\']/g,''); });
+    var results = [];
+
+    lines.slice(1).forEach(function(line) {
+      var cells = line.split(',').map(function(c){ return c.trim().replace(/["\']/g,''); });
+      var obj = {};
+
+      /* Date column */
+      var dateIdx = headers.findIndex(function(h){ return h === 'date' || h.includes('date'); });
+      if (dateIdx < 0 || !cells[dateIdx]) return;
+      var dateVal = cells[dateIdx];
+      /* Normalise YYYY-MM-DD */
+      if (/\d{4}-\d{2}-\d{2}/.test(dateVal)) { obj.date = dateVal; }
+      else if (/\d{2}\/\d{2}\/\d{4}/.test(dateVal)) {
+        var p = dateVal.split('/'); obj.date = p[2] + '-' + p[1] + '-' + p[0];
+      } else { obj.date = dateVal; }
+
+      /* Metric columns */
+      Object.keys(ALIASES).forEach(function(metric) {
+        var idx = headers.findIndex(function(h) {
+          return ALIASES[metric].some(function(alias){ return h.includes(alias); });
+        });
+        if (idx >= 0 && cells[idx] !== '' && !isNaN(parseFloat(cells[idx]))) {
+          obj[metric] = parseFloat(cells[idx]);
+        }
+      });
+
+      if (Object.keys(obj).length > 1) results.push(obj);
+    });
+    return results;
+  }
+
+  function previewCSV(card, ALIASES, raw) {
+    var preview = card.querySelector('#bm-csv-preview');
+    var previewRows = card.querySelector('#bm-csv-preview-rows');
+    if (!preview || !previewRows) return;
+    var rows = parseCSV(raw, ALIASES);
+    if (!rows.length) { preview.style.display = 'none'; return; }
+    preview.style.display = 'block';
+    previewRows.innerHTML = rows.slice(0,5).map(function(r) {
+      return '<div style="padding:6px 0;border-bottom:1px solid var(--border)">' +
+        '<strong>' + TF.UI.escapeHTML(r.date) + '</strong> — ' +
+        Object.keys(r).filter(function(k){ return k !== 'date'; }).map(function(k) {
+          return k + ': ' + r[k];
+        }).join(' · ') +
+      '</div>';
+    }).join('');
+  }
+
   function draw() {
     var log = TF.Store.getBodyMetrics();
 
@@ -241,10 +354,21 @@ TF.Screens['body-metrics'] = function(root) {
       '</div>' +
       latestSnapshot(log) +
       tabBar() +
+      '<div style="margin-bottom:12px">' +
+        '<button class="btn btn-ghost btn-sm" id="bm-csv-import-btn" type="button" style="width:auto;display:inline-flex;gap:6px;padding:7px 14px">' +
+          TF.Icon('upload', 13) + ' Import body scan CSV (DEXA / InBody)' +
+        '</button>' +
+      '</div>' +
       '<div id="bm-tab-content">' +
         (_tab === 'overview' ? renderOverview(log) : _tab === 'log' ? renderLog(log) : renderProgress(log)) +
       '</div>' +
       '<div style="height:8px"></div></div>';
+
+    /* ── v5.8 Body Scan CSV Import button ── */
+    var csvImportBtn = root.querySelector('#bm-csv-import-btn');
+    if (csvImportBtn) {
+      csvImportBtn.addEventListener('click', function() { showCSVImportModal(); });
+    }
 
     TF.UI.setHeroImg(root.querySelector('#bm-hero'), TF.Config.Images.progress);
 

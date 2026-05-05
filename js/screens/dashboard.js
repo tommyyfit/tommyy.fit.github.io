@@ -366,6 +366,28 @@ TF.Screens.dashboard = function(root) {
     '</div>';
   }
 
+  /* ── v5.8 — 7-Day Trend Badges ──────────────────────────────── */
+  function trendBadgesSection() {
+    if (!TF.Trends) return '';
+    var declining = TF.Trends.getDecliningMetrics();
+    if (!declining.length) return '';
+    var badges = declining.map(function (d) {
+      var icon = d.metric === 'sleep' || d.metric === 'sleepHrs' ? '🌙' :
+                 d.metric === 'energy' ? '⚡' :
+                 d.metric === 'focus'  ? '🎯' : '🔥';
+      return '<div style="display:inline-flex;align-items:center;gap:6px;' +
+        'background:var(--red-dim);border:1px solid var(--red)44;' +
+        'border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;color:var(--red)">' +
+        icon + ' ' + d.label + ' declining' +
+      '</div>';
+    }).join('');
+    return '<div class="section stagger-card">' +
+      TF.UI.secHdr('7-Day Trend Alert') +
+      '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px">' + badges + '</div>' +
+      '<div class="t-hint">Rolling 7-day average is down vs the prior 7 days. Tap Check-in to investigate.</div>' +
+    '</div>';
+  }
+
   function starterGuide() {
     if (hasFirstCheckin && hasFirstNutrition && hasFirstWorkout) return '';
     return '<div class="starter-guide dashboard-starter">' +
@@ -399,6 +421,7 @@ TF.Screens.dashboard = function(root) {
       '</div>' +
     '</div>' +
     starterGuide() +
+    trendBadgesSection() +
     (input ? '<div class="section stagger-card">' + TF.UI.secHdr('Coach Insights') + TF.Score.insights(input, nutrition).slice(0, 3).map(TF.UI.insightCard).join('') + '</div>' : '') +
     '<div class="section stagger-card">' +
       TF.UI.secHdr('Daily Dispatch') +

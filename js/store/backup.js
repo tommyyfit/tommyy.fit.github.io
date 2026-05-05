@@ -1,7 +1,7 @@
 TF.StoreBackup = (function(){
   'use strict';
 
-  var SCHEMA_VERSION = 1;
+  var SCHEMA_VERSION = 2;
   var VALUE_SHAPES = {
     PROFILE: 'object',
     INPUTS: 'object',

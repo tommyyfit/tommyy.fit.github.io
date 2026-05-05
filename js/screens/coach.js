@@ -16,9 +16,14 @@ TF.Screens.coach = function(root) {
       goal: 'Review the last 7 days and identify patterns, momentum, and weak spots.',
       output: 'Return: 1. weekly wins, 2. repeating issues, 3. next-week adjustments.'
     },
+    monthly: {
+      label: 'Monthly summary',
+      goal: 'Analyse this full month of data: scores, nutrition averages, habits, PRs, and 7-day trends. Identify the most important patterns.',
+      output: 'Return: 1. month grade & top wins, 2. top 3 recurring issues, 3. next-month focus areas with specific targets.'
+    },
     training: {
       label: 'Training plan',
-      goal: 'Use the profile, recovery, recent workouts, and PRs to advise training.',
+      goal: 'Use the profile, recovery, recent workouts, PRs, and strength trends to advise training.',
       output: 'Return: 1. what to train next, 2. volume/intensity advice, 3. overload suggestion.'
     },
     nutrition: {
@@ -147,7 +152,50 @@ TF.Screens.coach = function(root) {
       measurements: measurements,
       recentWorkouts: recentWorkouts,
       prs: prs,
-      bodyMetrics: latestBodyMetrics
+      bodyMetrics: latestBodyMetrics,
+
+      /* v5.8 — 7-day trend summary */
+      trends7Day: (function() {
+        if (!TF.Trends) return null;
+        var t = TF.Trends.getTrends();
+        var out = {};
+        Object.keys(t).forEach(function(m) {
+          out[m] = {
+            label: t[m].label,
+            recentAvg: t[m].recent !== null ? +t[m].recent.toFixed(2) : null,
+            priorAvg: t[m].prior !== null ? +t[m].prior.toFixed(2) : null,
+            delta: t[m].delta !== null ? +t[m].delta.toFixed(2) : null,
+            declining: t[m].declining
+          };
+        });
+        return out;
+      })(),
+
+      /* v5.8 — Full PR history */
+      allPRs: (function() {
+        var prs = TF.Store.getPRs ? TF.Store.getPRs() : {};
+        return Object.keys(prs).sort().map(function(name) {
+          return { exercise: name, weight: prs[name].weight, reps: prs[name].reps, date: prs[name].date, est1RM: prs[name].est1RM ? +prs[name].est1RM.toFixed(1) : null };
+        });
+      })(),
+
+      /* v5.8 — Habit correlation summary (top 5 by rate) */
+      habitCorrelation: (function() {
+        var allInputs = TF.Store.getAllInputs ? TF.Store.getAllInputs() : {};
+        var allHabits;
+        try { allHabits = JSON.parse(localStorage.getItem('tf_habits') || '{}'); } catch(e) { allHabits = {}; }
+        var dates = Object.keys(allInputs).sort().slice(-30);
+        return TF.Config.DefaultHabits.map(function(h) {
+          var done = 0, highScore = 0;
+          dates.forEach(function(k) {
+            if ((allHabits[k] || {})[h.id]) {
+              done++;
+              if (allInputs[k] && TF.Score.daily(allInputs[k]) >= 74) highScore++;
+            }
+          });
+          return { habit: h.label, doneIn30Days: done, doneOnHighScoreDay: highScore, correlationRate: done > 0 ? +(highScore/done).toFixed(2) : 0 };
+        }).sort(function(a,b){ return b.correlationRate - a.correlationRate; }).slice(0, 5);
+      })()
     };
   }
 

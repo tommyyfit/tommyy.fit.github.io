@@ -3,9 +3,17 @@
    inline calorie/protein calculator, equipment picker, skip
    ================================================================ */
 TF.Screens.onboarding = function(root) {
+  var pendingProfile = TF.Auth && TF.Auth.getPendingProfile ? TF.Auth.getPendingProfile() : null;
+  var existingProfile = TF.Store.getProfile();
   var step = 0;
   var TOTAL_STEPS = 4;
-  var data = { name: '', goal: 'muscle', equipment: 'minimal', experience: 'beginner', weightKg: '' };
+  var data = {
+    name: pendingProfile && pendingProfile.name || (existingProfile.name !== 'Warrior' ? existingProfile.name : ''),
+    goal: existingProfile.goal || 'muscle',
+    equipment: existingProfile.equipment || 'minimal',
+    experience: existingProfile.experience || 'beginner',
+    weightKg: existingProfile.bodyWeightKg ? String(existingProfile.bodyWeightKg) : ''
+  };
 
   /* ── Helpers ── */
   function progressBar() {
@@ -177,6 +185,10 @@ TF.Screens.onboarding = function(root) {
   function render() {
     root.innerHTML = '<div class="screen-full" style="background:var(--bg-base);overflow:auto;min-height:100dvh">' +
       '<div style="max-width:440px;margin:0 auto">' +
+        '<div class="auth-shell-inline-links">' +
+          '<button class="btn btn-ghost btn-sm" id="ob-open-login" type="button">' + TF.Icon('log-in', 12) + ' Login</button>' +
+          '<button class="btn btn-ghost btn-sm" id="ob-open-register" type="button">' + TF.Icon('user-plus', 12) + ' Register</button>' +
+        '</div>' +
         STEPS[step]() +
       '</div>' +
     '</div>';
@@ -185,6 +197,21 @@ TF.Screens.onboarding = function(root) {
   }
 
   function bindStepEvents() {
+    var loginBtn = root.querySelector('#ob-open-login');
+    var registerBtn = root.querySelector('#ob-open-register');
+
+    if (loginBtn) {
+      loginBtn.addEventListener('click', function(){
+        TF.Router.navigate('login', true);
+      });
+    }
+
+    if (registerBtn) {
+      registerBtn.addEventListener('click', function(){
+        TF.Router.navigate('register', true);
+      });
+    }
+
     /* Goal chooser */
     root.querySelectorAll('[data-goal]').forEach(function(el) {
       el.addEventListener('click', function() {
@@ -294,6 +321,9 @@ TF.Screens.onboarding = function(root) {
     });
 
     TF.Store.markOnboarded();
+    if (TF.Auth && TF.Auth.clearPendingProfile) {
+      TF.Auth.clearPendingProfile();
+    }
     TF.UI.haptic(100);
     TF.UI.confetti();
     TF.UI.toast('Welcome, ' + data.name + '. Export a backup soon from Profile.', 'success');

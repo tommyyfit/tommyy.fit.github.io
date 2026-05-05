@@ -218,16 +218,16 @@ TF.UI = (function () {
     modal({
       icon: 'user',
       title: 'Create your account first',
-      copy: 'Create an account before you can do this. Finish the onboarding steps first, then the rest of the app will unlock.',
+      copy: 'Create your account before you can do this. Start in the new auth shell, then finish onboarding to unlock the rest of the app.',
       cancelText: 'Not now',
-      confirmText: 'Create account',
+      confirmText: 'Open register',
       onConfirm: function () {
         var nameField;
-        if (TF.Router && TF.Router.current && TF.Router.current() !== 'onboarding') {
-          TF.Router.navigate('onboarding', true);
+        if (TF.Router && TF.Router.current && TF.Router.current() !== 'register') {
+          TF.Router.navigate('register', true);
           return;
         }
-        nameField = document.getElementById('ob-name');
+        nameField = document.getElementById('auth-name');
         if (nameField) {
           nameField.focus();
         }

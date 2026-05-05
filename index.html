@@ -11,13 +11,13 @@
   <meta name="apple-mobile-web-app-title" content="tommyy.fit" />
   <meta
     name="description"
-    content="tommyy.fit v5.7 - static performance tracker for discipline, habits, workouts, nutrition, and progress."
+    content="tommyy.fit v6.0-alpha - offline-first tracker with cloud sync, login, register, and installable PWA support."
   />
 
-  <meta property="og:title" content="tommyy.fit v5.7 - Discipline. Performance. Transformation." />
+  <meta property="og:title" content="tommyy.fit v6.0-alpha - Discipline. Performance. Transformation." />
   <meta
     property="og:description"
-    content="Static fitness tracker with habits, workouts, nutrition, progress, and copy-ready AI exports for any chatbot."
+    content="Offline-first fitness tracker with cloud sync, account login, and installable PWA support."
   />
   <meta
     property="og:image"
@@ -32,7 +32,7 @@
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="./assets/icon.svg" />
 
-  <title>tommyy.fit v5.7 - Discipline. Performance. Transformation.</title>
+  <title>tommyy.fit v6.0-alpha - Discipline. Performance. Transformation.</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -52,10 +52,18 @@
 <body>
   <a class="skip-link" href="#screen-root">Skip to content</a>
   <div id="app">
-    <!-- v5.7 Offline Banner -->
+    <div id="offline-splash" class="offline-splash" aria-hidden="true">
+      <div class="offline-splash-card">
+        <div class="offline-splash-badge">OFFLINE-FIRST</div>
+        <div class="offline-splash-title">You are offline.</div>
+        <div class="offline-splash-copy">Everything still saves locally. Your queue will drain when the connection comes back.</div>
+        <div class="offline-splash-status" data-sync-status>Offline</div>
+      </div>
+    </div>
+    <!-- v6.0-alpha Offline Banner -->
     <div id="offline-banner" role="status" aria-live="polite" aria-label="Network status">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.56 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
-      NO CONNECTION — WORKING OFFLINE
+      NO CONNECTION - WORKING OFFLINE
     </div>
     <div id="loader" aria-label="Loading screen">
       <div
@@ -72,7 +80,7 @@
           <div class="loader-bar-fill"></div>
         </div>
         <div class="loader-version">
-          v5.7 by
+          v6.0-alpha by
           <a href="https://beacons.ai/tommyy.fit" target="_blank" rel="noopener noreferrer">
             tommyy.fit
           </a>
@@ -92,9 +100,14 @@
           <span class="brand-text">TOMMYY</span><span class="brand-dot">.FIT</span>
         </a>
 
-        <div id="topbar-meta"></div>
+        <div id="topbar-meta">
+          <div class="sync-pill">
+            <span class="sync-pill-dot"></span>
+            <span data-sync-status>Local only</span>
+          </div>
+        </div>
         <div id="topbar-actions">
-          <!-- v5.7 Notification bell injected here by app.js -->
+          <!-- Notification bell injected here by app.js -->
         </div>
       </div>
     </header>
@@ -158,7 +171,7 @@
       </button>
 
       <div class="sidebar-footer">
-        v5.7 &middot;
+        v6.0-alpha &middot;
         <a href="https://beacons.ai/tommyy.fit" target="_blank" rel="noopener noreferrer">tommyy.fit</a>
       </div>
     </nav>
@@ -190,12 +203,16 @@
   </noscript>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 
   <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
   <script src="js/store/backup.js"></script>
   <script src="js/store.js"></script>
+  <script src="js/data-layer.js"></script>
   <script src="js/router.js"></script>
   <script src="js/engine/score.js"></script>
   <script src="js/engine/workout.js"></script>
@@ -205,10 +222,12 @@
   <script src="js/engine/overload.js"></script>
   <script src="js/engine/habits.js"></script>
   <script src="js/engine/celebrations.js"></script>
+  <script src="js/engine/trends.js"></script>
   <script src="js/engine/rewards.js"></script>
   <script src="js/components/icons.js"></script>
   <script src="js/components/ui.js"></script>
   <script src="js/components/charts.js"></script>
+  <script src="js/screens/auth.js"></script>
   <script src="js/screens/onboarding.js"></script>
   <script src="js/screens/dashboard.js"></script>
   <script src="js/screens/checkin.js"></script>
@@ -217,8 +236,6 @@
   <script src="js/screens/workout.js"></script>
   <script src="js/screens/habits.js"></script>
   <script src="js/screens/nutrition.js"></script>
-  <script src="js/screens/progress.js"></script>
-  <script src="js/screens/history.js"></script>
   <script src="js/screens/custom-workouts.js"></script>
   <script src="js/screens/measurements.js"></script>
   <script src="js/screens/body-metrics.helpers.js"></script>
@@ -226,9 +243,13 @@
   <script src="js/screens/weekly-review.js"></script>
   <script src="js/screens/achievements.js"></script>
   <script src="js/screens/coach.js"></script>
+  <script src="js/screens/pr-history.js"></script>
+  <script src="js/screens/habit-heatmap.js"></script>
+  <script src="js/screens/report-card.js"></script>
   <script src="js/screens/profile.js"></script>
   <script src="js/screens/more.js"></script>
   <script src="js/notifications.js"></script>
+  <script src="js/pwa.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
